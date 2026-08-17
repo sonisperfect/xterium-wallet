@@ -8,6 +8,7 @@
   :root {
     /* Xterium mint identity in the Xode design language */
     --x-bg: #04130f;
+    --x-bg-deep: #020c09;
     --x-panel: #07211b;
     --x-panel-2: #0b2d24;
     --x-mint: #2fe0c2;
@@ -15,7 +16,9 @@
     --x-mint-soft: #a7f3e5;
     --x-ink: #effaf6;
     --x-dim: #8fb3aa;
+    --x-faint: #5b7a72;
     --x-line: rgba(47, 224, 194, 0.16);
+    --x-line-hard: rgba(47, 224, 194, 0.34);
 
     --background: 170 66% 4%;
     --foreground: 165 30% 95%;
@@ -66,6 +69,32 @@
   ::selection {
     background: var(--x-mint);
     color: #04130f;
+  }
+  /* engineering-tool focus ring */
+  :focus-visible {
+    outline: 1.5px solid var(--x-mint);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+  /* page-wide slim scrollbar */
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(47, 224, 194, 0.28) #020c09;
+  }
+  ::-webkit-scrollbar {
+    width: 9px;
+    height: 9px;
+  }
+  ::-webkit-scrollbar-track {
+    background: #020c09;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(47, 224, 194, 0.22);
+    border: 2px solid #020c09;
+    border-radius: 6px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: rgba(47, 224, 194, 0.4);
   }
 }
 
@@ -256,7 +285,76 @@
     from { background-position: 0 0; }
     to { background-position: 13px 13px; }
   }
+  /* ---- engineering grid overlay: 1px hairlines, slow ambient pan ---- */
+  .grid-lines {
+    background-image:
+      linear-gradient(to right, rgba(47, 224, 194, 0.05) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(47, 224, 194, 0.05) 1px, transparent 1px);
+    background-size: 72px 72px;
+  }
+  @keyframes grid-pan {
+    from { background-position: 0 0, 0 0; }
+    to { background-position: 72px 72px, 72px 72px; }
+  }
+  .grid-pan {
+    animation: grid-pan 38s linear infinite;
+  }
+
+  /* text tiers */
+  .text-faint {
+    color: var(--x-faint);
+  }
+
+  /* spec-sheet micro label: mono, uppercase, measured tracking */
+  .spec-label {
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 10px;
+    letter-spacing: 0.24em;
+    text-transform: uppercase;
+    color: var(--x-faint);
+  }
+
+  /* hairline instrument frame — replaces dotted frames on pro surfaces */
+  .frame-hair {
+    border: 1px solid rgba(239, 250, 246, 0.09);
+  }
+  .frame-mint {
+    border: 1px solid var(--x-line);
+  }
+
+  /* terminal phosphor text with a faint glow */
+  .phosphor {
+    color: var(--x-mint);
+    text-shadow: 0 0 12px rgba(47, 224, 194, 0.35);
+  }
+
+  /* CRT scanline sweep for terminal surfaces */
+  .terminal-scan {
+    position: relative;
+    overflow: hidden;
+  }
+  .terminal-scan::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      transparent 0px,
+      transparent 3px,
+      rgba(2, 12, 9, 0.25) 3px,
+      rgba(2, 12, 9, 0.25) 4px
+    );
+    opacity: 0.55;
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    .btn-dots:hover::after { animation: none; }
+    .btn-dots:hover::after,
+    .grid-pan,
+    .float-y,
+    .spin-slow,
+    .marquee-track {
+      animation: none;
+    }
   }
 }

@@ -1,5 +1,6 @@
 import { Apple, Chrome, Play } from 'lucide-react'
 import BlinkDots from '../components/BlinkDots'
+import SectionMarker from '../components/SectionMarker'
 
 const SURE = [
   { src: '/assets/tinted/about-sure-s.png', label: 'Safe' },
@@ -34,9 +35,9 @@ export default function Download() {
     <section id="download" className="relative overflow-hidden border-t border-line py-28">
       <BlinkDots gap={26} baseAlpha={0.06} />
       <div className="relative mx-auto max-w-4xl px-5 text-center sm:px-8">
-        <p className="font-pixel text-[11px] uppercase tracking-[0.3em] text-primary sm:text-xs">
-          Download
-        </p>
+        <div className="flex justify-center">
+          <SectionMarker no="04" label="Download" />
+        </div>
         <h2 className="font-display mt-5 text-4xl font-bold leading-[1.02] tracking-[-0.02em] md:text-6xl">
           Seamless access —
           <br />
@@ -57,11 +58,9 @@ export default function Download() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label={s.name}
-              className="btn-dots lift dot-frame group flex items-center gap-3.5 rounded-2xl bg-panel px-7 py-4 hover:bg-panel-2 hover:shadow-[0_16px_44px_-16px_rgba(47,224,194,0.35)]"
+              className="btn-dots lift group flex items-center gap-3.5 rounded-lg border border-[rgba(239,250,246,0.09)] bg-panel px-7 py-4 transition-colors duration-300 hover:border-[rgba(47,224,194,0.4)] hover:bg-panel-2 hover:shadow-[0_0_0_1px_rgba(47,224,194,0.12),0_16px_44px_-16px_rgba(47,224,194,0.35)]"
             >
-              <span className="relative flex h-10 w-10 items-center justify-center rounded-xl bg-primary/12 transition-colors group-hover:bg-primary/20">
-                <s.icon className="h-5 w-5 text-primary" />
-              </span>
+              <s.icon className="h-5 w-5 text-primary" strokeWidth={1.5} />
               <span className="relative text-left">
                 <span className="font-mono2 block text-[9px] uppercase tracking-[0.18em] text-dim">
                   {s.top}
@@ -80,7 +79,7 @@ export default function Download() {
         </p>
 
         {/* S.U.R.E trust strip — slim, single row */}
-        <div className="dot-frame mt-14 rounded-2xl bg-panel px-6 py-7">
+        <div className="mt-14 rounded-lg border border-[rgba(239,250,246,0.09)] bg-panel px-6 py-7">
           <p className="font-mono2 text-[11px] uppercase tracking-[0.22em] text-dim">
             The Xterium promise<span className="blink text-primary">_</span>
           </p>

@@ -1,4 +1,5 @@
 import BlinkDots from '../components/BlinkDots'
+import SectionMarker from '../components/SectionMarker'
 import WalletMock from '../components/WalletMock'
 
 const SCREENS = [
@@ -32,9 +33,7 @@ export default function AppShowcase() {
     <section id="showcase" className="relative overflow-hidden border-t border-line py-28">
       <BlinkDots gap={26} baseAlpha={0.06} />
       <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
-        <p className="font-pixel text-[11px] uppercase tracking-[0.3em] text-primary sm:text-xs">
-          The app
-        </p>
+        <SectionMarker no="02" label="The app" />
         <h2 className="font-display mt-5 max-w-3xl text-4xl font-bold leading-[1.02] tracking-[-0.02em] md:text-6xl">
           Your assets,
           <br />
@@ -64,7 +63,7 @@ export default function AppShowcase() {
                 ['Explore & history built in', 'Track every transaction and discover Xode dApps.'],
               ].map(([t, d], i) => (
                 <li key={t} className="flex gap-5 border-t border-line-soft py-6 last:border-b">
-                  <span className="font-pixel mt-1 text-xs text-primary/70">0{i + 1}</span>
+                  <span className="font-mono2 mt-1 text-[11px] tracking-[0.18em] text-primary/80">/0{i + 1}</span>
                   <div>
                     <p className="font-display text-lg font-semibold">{t}</p>
                     <p className="mt-1.5 text-sm leading-relaxed text-dim">{d}</p>
@@ -87,13 +86,22 @@ export default function AppShowcase() {
           </div>
           <div className="scroll-slim mt-8 flex gap-5 overflow-x-auto pb-4">
             {STORE_SHOTS.map((s) => (
-              <figure key={s.src} className="lift dot-frame group w-[420px] shrink-0 overflow-hidden rounded-2xl bg-panel">
+              <figure key={s.src} className="lift group w-[420px] shrink-0 overflow-hidden rounded-lg border border-[rgba(239,250,246,0.09)] bg-panel transition-colors duration-300 hover:border-[rgba(47,224,194,0.4)]">
+                {/* window chrome — artifact framing */}
+                <div className="flex items-center justify-between border-b border-line-soft px-4 py-2">
+                  <div className="flex items-center gap-1.5">
+                    <span className="h-1.5 w-1.5 rounded-full bg-white/15" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-white/15" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-primary/60" />
+                  </div>
+                  <span className="spec-label">{s.label.toLowerCase().replace(/\s+/g, '-')}.png</span>
+                </div>
                 <img
                   src={s.src}
                   alt={`Xterium extension — ${s.label}`}
                   className="aspect-[8/5] w-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.02]"
                 />
-                <figcaption className="font-mono2 flex items-center gap-2 px-5 py-3.5 text-[11px] uppercase tracking-[0.18em] text-dim">
+                <figcaption className="font-mono2 flex items-center gap-2 border-t border-line-soft px-5 py-3 text-[11px] uppercase tracking-[0.18em] text-dim">
                   <span className="pulse-dot h-1.5 w-1.5 rounded-full bg-primary" />
                   {s.label}
                 </figcaption>
@@ -104,14 +112,15 @@ export default function AppShowcase() {
 
         {/* real feature screenshots */}
         <div className="mt-20 grid gap-5 md:grid-cols-3">
-          {SCREENS.map((s) => (
-            <article key={s.title} className="lift dot-frame group overflow-hidden rounded-2xl bg-panel">
-              <div className="dot-grid-fine flex h-[340px] items-center justify-center border-b border-line-soft bg-black/25 p-6">
+          {SCREENS.map((s, i) => (
+            <article key={s.title} className="lift group overflow-hidden rounded-lg border border-[rgba(239,250,246,0.09)] bg-panel transition-colors duration-300 hover:border-[rgba(47,224,194,0.4)]">
+              <div className="dot-grid-fine relative flex h-[340px] items-center justify-center border-b border-line-soft bg-black/30 p-6">
                 <img
                   src={s.src}
                   alt={s.title}
                   className="max-h-full w-auto object-contain transition-transform duration-500 group-hover:scale-[1.03]"
                 />
+                <span className="spec-label absolute bottom-2.5 left-3">fig.0{i + 5}</span>
               </div>
               <div className="p-6">
                 <h3 className="font-display text-lg font-semibold">{s.title}</h3>
@@ -124,8 +133,9 @@ export default function AppShowcase() {
         {/* live interactive demo */}
         <div className="mt-24 grid items-center gap-12 lg:grid-cols-[1fr_auto]">
           <div>
-            <p className="font-pixel text-[11px] uppercase tracking-[0.3em] text-primary sm:text-xs">
-              Live demo
+            <p className="font-mono2 flex items-center gap-3 text-[11px] uppercase tracking-[0.28em] text-faint">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
+              <span className="text-dim">Live demo — runs locally</span>
             </p>
             <h3 className="font-display mt-5 text-3xl font-bold leading-tight tracking-[-0.02em] md:text-4xl">
               Don't take our word for it —
@@ -143,7 +153,7 @@ export default function AppShowcase() {
             </div>
           </div>
           <div className="relative mx-auto">
-            <div className="dot-frame absolute -inset-5 rounded-[1.8rem]" aria-hidden="true" />
+            <div className="absolute -inset-5 rounded-xl border border-[rgba(47,224,194,0.2)]" aria-hidden="true" />
             <WalletMock />
           </div>
         </div>

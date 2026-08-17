@@ -4,6 +4,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/components/ui/accordion'
+import SectionMarker from '../components/SectionMarker'
 
 const FAQS = [
   {
@@ -33,7 +34,7 @@ export default function Faq() {
     <section id="faq" className="relative border-t border-line py-28">
       <div className="mx-auto grid max-w-7xl gap-12 px-5 sm:px-8 md:grid-cols-[0.9fr_1.1fr]">
         <div>
-          <p className="font-pixel text-[11px] uppercase tracking-[0.3em] text-primary sm:text-xs">FAQ</p>
+          <SectionMarker no="05" label="FAQ" />
           <h2 className="font-display mt-5 text-4xl font-bold leading-[1.02] tracking-[-0.02em] md:text-6xl">
             Questions,
             <br />
@@ -49,7 +50,7 @@ export default function Faq() {
             <AccordionItem key={i} value={`item-${i}`} className="border-line-soft">
               <AccordionTrigger className="font-display text-left text-base font-semibold hover:text-primary hover:no-underline">
                 <span className="flex items-baseline gap-4">
-                  <span className="font-pixel text-xs text-primary/60">0{i + 1}</span>
+                  <span className="font-mono2 text-[11px] tracking-[0.18em] text-primary/70">0{i + 1}</span>
                   {f.q}
                 </span>
               </AccordionTrigger>

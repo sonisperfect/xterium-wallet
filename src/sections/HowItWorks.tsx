@@ -1,4 +1,5 @@
 import BlinkDots from '../components/BlinkDots'
+import SectionMarker from '../components/SectionMarker'
 import { useState } from 'react'
 import { ArrowLeft, ArrowRight, Check, FileUp, KeySquare, Plus, ScrollText, Send } from 'lucide-react'
 
@@ -184,7 +185,7 @@ export default function HowItWorks() {
     <section id="how-it-works" className="relative overflow-hidden border-t border-line py-28">
       <BlinkDots gap={20} color="239, 250, 246" baseAlpha={0.04} />
       <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
-        <p className="font-pixel text-[11px] uppercase tracking-[0.3em] text-primary sm:text-xs">Getting started</p>
+        <SectionMarker no="03" label="Getting started" />
         <h2 className="mt-5 font-display text-4xl font-bold leading-[1.02] tracking-[-0.02em] md:text-6xl">
           From install to first
           <br />
@@ -210,7 +211,7 @@ export default function HowItWorks() {
         </div>
 
         {/* Stepper card */}
-        <div className="dot-frame mt-8 overflow-hidden rounded-2xl bg-panel">
+        <div className="mt-8 overflow-hidden rounded-lg border border-[rgba(239,250,246,0.09)] bg-panel">
           {/* progress rail */}
           <div className="flex items-center gap-0 border-b border-line-soft px-6 pt-6 md:px-10">
             {flow.steps.map((s, i) => (
@@ -265,22 +266,27 @@ export default function HowItWorks() {
               </div>
             </div>
 
-            {/* code-drawn UI hint panel */}
-            <div className="flex items-center justify-center rounded-xl border border-line-soft bg-black/40 p-6">
-              <div className="w-full">
-                <div className="mb-4 flex gap-1.5">
-                  <span className="h-2 w-2 rounded-full bg-white/15" />
-                  <span className="h-2 w-2 rounded-full bg-white/15" />
-                  <span className="h-2 w-2 rounded-full bg-white/15" />
+            {/* code-drawn UI hint panel — terminal chrome */}
+            <div className="flex flex-col rounded-md border border-line-soft bg-[#020c09]/80">
+              <div className="flex items-center justify-between border-b border-line-soft px-4 py-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="h-1.5 w-1.5 rounded-full bg-white/15" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-white/15" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary/60" />
                 </div>
-                <p className="rounded-lg border border-line bg-panel px-4 py-3.5 font-mono2 text-[12px] leading-relaxed text-mint-soft">
-                  {current.hint}
-                </p>
-                <div className="mt-4 h-1 w-full overflow-hidden rounded-full bg-white/10">
-                  <div
-                    className="h-full rounded-full bg-primary transition-all duration-500"
-                    style={{ width: `${((step + 1) / flow.steps.length) * 100}%` }}
-                  />
+                <span className="spec-label">flow:{flow.id} · step {step + 1}/{flow.steps.length}</span>
+              </div>
+              <div className="flex flex-1 items-center p-5">
+                <div className="w-full">
+                  <p className="rounded-md border border-line bg-panel px-4 py-3.5 font-mono2 text-[12px] leading-relaxed text-mint-soft">
+                    {current.hint}
+                  </p>
+                  <div className="mt-4 h-1 w-full overflow-hidden rounded-full bg-white/10">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all duration-500"
+                      style={{ width: `${((step + 1) / flow.steps.length) * 100}%` }}
+                    />
+                  </div>
                 </div>
               </div>
             </div>

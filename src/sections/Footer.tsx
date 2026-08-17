@@ -96,6 +96,7 @@ export default function Footer() {
 
         <div className="mt-12 flex flex-col gap-2 border-t border-line-soft pt-6 font-mono2 text-[11px] uppercase tracking-[0.16em] text-dim md:flex-row md:items-center md:justify-between">
           <p>© {new Date().getFullYear()} RAKSON OPC · All rights reserved</p>
+          <p className="hidden text-faint lg:block">build 2.0.4 · main · sha dfc93e1</p>
           <p className="flex items-center gap-2">
             <span className="pulse-dot inline-block h-1.5 w-1.5 rounded-full bg-primary" />
             Xterium Wallet — built for the <span className="text-primary">Xode</span> ecosystem

@@ -1,4 +1,6 @@
 import BlinkDots from '../components/BlinkDots'
+import SectionMarker from '../components/SectionMarker'
+import CornerTicks from '../components/CornerTicks'
 import { ArrowLeftRight, FileCode2, KeyRound, Layers } from 'lucide-react'
 
 const FEATURES = [
@@ -43,9 +45,7 @@ export default function Features() {
       <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
         <div className="flex flex-wrap items-end justify-between gap-6">
           <div>
-            <p className="font-pixel text-[11px] uppercase tracking-[0.3em] text-primary sm:text-xs">
-              Why Xterium
-            </p>
+            <SectionMarker no="01" label="Why Xterium" />
             <h2 className="font-display mt-5 max-w-2xl text-4xl font-bold leading-[1.02] tracking-[-0.02em] md:text-6xl">
               A wallet that works
               <br />
@@ -62,26 +62,30 @@ export default function Features() {
           {FEATURES.map((f, i) => (
             <article
               key={f.no}
-              className="lift dot-frame group relative rounded-2xl bg-panel p-7 hover:bg-panel-2 hover:shadow-[0_20px_60px_-20px_rgba(47,224,194,0.25)] sm:p-9"
+              className="lift group relative rounded-lg border border-[rgba(239,250,246,0.09)] bg-panel transition-colors duration-300 hover:border-[rgba(47,224,194,0.4)] hover:bg-panel-2 hover:shadow-[0_0_0_1px_rgba(47,224,194,0.12),0_24px_70px_-28px_rgba(47,224,194,0.3)] sm:p-1"
             >
-              <div className="flex items-start justify-between">
-                <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/12">
-                  <f.icon className="h-5 w-5 text-primary" />
-                </span>
-                <span className="font-pixel text-sm text-primary/60">{f.no}</span>
-              </div>
+              <div className="p-6 sm:p-8">
+                <div className="flex items-start justify-between">
+                  <f.icon className="h-5 w-5 text-primary" strokeWidth={1.5} />
+                  <span className="font-mono2 text-[11px] tracking-[0.2em] text-faint transition-colors group-hover:text-primary">
+                    /{f.no}
+                  </span>
+                </div>
 
-              <h3 className="font-display mt-6 text-2xl font-semibold tracking-tight">{f.title}</h3>
-              <p className="mt-3 leading-relaxed text-dim">{f.body}</p>
+                <h3 className="font-display mt-6 text-2xl font-semibold tracking-tight">{f.title}</h3>
+                <p className="mt-3 leading-relaxed text-dim">{f.body}</p>
 
-              {/* clear brand illustration with a gentle float + hover pop */}
-              <div className="dot-grid-fine mt-7 flex h-48 items-center justify-center overflow-hidden rounded-xl border border-line-soft bg-black/25 p-5">
-                <img
-                  src={f.img}
-                  alt={f.alt}
-                  className="float-y max-h-full w-auto object-contain drop-shadow-[0_0_18px_rgba(47,224,194,0.25)] transition-transform duration-500 group-hover:scale-[1.07]"
-                  style={{ animationDelay: `${i * 0.9}s` }}
-                />
+                {/* brand illustration in an instrument frame */}
+                <div className="dot-grid-fine relative mt-7 flex h-48 items-center justify-center overflow-hidden rounded-md border border-line-soft bg-black/30 p-5">
+                  <CornerTicks inset={6} />
+                  <img
+                    src={f.img}
+                    alt={f.alt}
+                    className="float-y max-h-full w-auto object-contain drop-shadow-[0_0_18px_rgba(47,224,194,0.25)] transition-transform duration-500 group-hover:scale-[1.07]"
+                    style={{ animationDelay: `${i * 0.9}s` }}
+                  />
+                  <span className="spec-label absolute bottom-2.5 left-3">fig.{f.no}</span>
+                </div>
               </div>
             </article>
           ))}

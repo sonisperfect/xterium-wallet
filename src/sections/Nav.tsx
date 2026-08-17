@@ -27,6 +27,9 @@ export default function Nav() {
       <nav className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 sm:px-8">
         <a href="#top" className="flex items-center gap-3">
           <img src="/logo/xterium-logo-with-text.png" alt="Xterium Wallet" className="h-8 w-auto" />
+          <span className="font-mono2 hidden rounded-sm border border-line-soft px-1.5 py-0.5 text-[9px] uppercase tracking-[0.18em] text-faint sm:inline-block">
+            v2.0
+          </span>
         </a>
 
         <div className="hidden items-center gap-8 md:flex">
