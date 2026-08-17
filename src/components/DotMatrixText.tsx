@@ -3,8 +3,10 @@ import { useEffect, useRef } from 'react'
 /**
  * Classic dot-matrix text — the given word is sampled offscreen and
  * re-rendered as a grid of dots. On mount the dots switch on one by one
- * in a left-to-right wave, like an LED departure board lighting up;
- * afterwards a fraction of the dots keep blinking slowly.
+ * in a left-to-right wave, like an LED departure board lighting up.
+ * Afterwards, random dots across the whole word slowly fade to
+ * translucent, hold, and return to full color — irregularly, like a
+ * living LED board.
  */
 export default function DotMatrixText({
   text,
@@ -32,14 +34,23 @@ export default function DotMatrixText({
       x: number
       y: number
       r: number
-      phase: number
-      speed: number
-      blink: boolean
       birth: number
+      fadeAt: number // next time this dot starts a fade cycle
+      depth: number // how translucent it gets at the bottom of a cycle (0..1)
     }[] = []
     let startAt = 0
     let revealDone = false
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+
+    const BASE = 0.92 // resting alpha
+    const FADE_DOWN = 1100 // ms to fade out
+    const HOLD = 420 // ms at minimum
+    const FADE_UP = 1100 // ms to fade back
+
+    const easeInOut = (k: number) => (k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2)
+    // irregular re-schedule: long random quiet periods so only a few
+    // dots are fading at any moment, scattered across the whole word
+    const nextGap = () => 4000 + Math.random() * 14000
 
     const build = async () => {
       await document.fonts.ready
@@ -80,11 +91,11 @@ export default function DotMatrixText({
               x,
               y,
               r: gap * 0.32,
-              phase: Math.random() * Math.PI * 2,
-              speed: 0.6 + Math.random() * 1.4,
-              blink: Math.random() < 0.08,
               // staggered switch-on: left-to-right wave + slight vertical jitter
               birth: startAt + (x / w) * revealSpan + Math.random() * 180 + (y / h) * 90,
+              // first fade happens soon after reveal, then reschedules irregularly
+              fadeAt: startAt + revealSpan + 800 + Math.random() * 6000,
+              depth: 0.55 + Math.random() * 0.45, // some dots nearly vanish, some just dim
             })
           }
         }
@@ -113,9 +124,21 @@ export default function DotMatrixText({
             ctx.fill()
             continue
           }
-          let alpha = 0.9
-          if (!reduced && d.blink) {
-            alpha = 0.5 + 0.4 * (0.5 + 0.5 * Math.sin(t * 0.0006 * d.speed + d.phase))
+
+          // ambient life: irregular slow fade cycles per dot
+          let alpha = BASE
+          if (!reduced && t >= d.fadeAt) {
+            const ft = t - d.fadeAt
+            const min = BASE * (1 - d.depth) * 0.35 // translucent floor
+            if (ft < FADE_DOWN) {
+              alpha = BASE - (BASE - min) * easeInOut(ft / FADE_DOWN)
+            } else if (ft < FADE_DOWN + HOLD) {
+              alpha = min
+            } else if (ft < FADE_DOWN + HOLD + FADE_UP) {
+              alpha = min + (BASE - min) * easeInOut((ft - FADE_DOWN - HOLD) / FADE_UP)
+            } else {
+              d.fadeAt = t + nextGap()
+            }
           }
           ctx.fillStyle = `rgba(${color}, ${alpha})`
           ctx.beginPath()
