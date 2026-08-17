@@ -16,6 +16,7 @@ dist-ssr
 .wrangler
 scripts/shots/
 scripts/shots-live/
+scripts/shots-dev/
 
 # Editor directories and files
 .vscode/*
