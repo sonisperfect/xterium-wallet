@@ -1,0 +1,13 @@
+node_modules
+dist
+dist-ssr
+.git
+.github
+.env
+*.local
+*.md
+.vscode
+.idea
+scripts/shots
+scripts/shots-live
+xterium-wallet.tar.gz
