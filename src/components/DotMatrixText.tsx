@@ -51,6 +51,7 @@ export default function DotMatrixText({
     // irregular re-schedule: long random quiet periods so only a few
     // dots are fading at any moment, scattered across the whole word
     const nextGap = () => 4000 + Math.random() * 14000
+    const nextWaveGap = () => 4200 + Math.random() * 5200
 
     const build = async () => {
       await document.fonts.ready
@@ -102,9 +103,25 @@ export default function DotMatrixText({
       }
       revealDone = reduced
 
+      // pulse wave state — a bright band that sweeps the word irregularly
+      let waveAt = startAt + revealSpan + 2400
+      const WAVE_MS = 1500 // sweep duration across the word
+      const BAND = 110 // wavefront width in px
+
       const draw = (t: number) => {
         ctx.clearRect(0, 0, w, h)
         let allBorn = true
+
+        // wavefront x position (when active)
+        let waveX = -1
+        if (!reduced && revealDone && t >= waveAt) {
+          waveX = ((t - waveAt) / WAVE_MS) * (w + BAND * 2) - BAND
+          if (waveX > w + BAND) {
+            waveAt = t + nextWaveGap()
+            waveX = -1
+          }
+        }
+
         for (const d of dots) {
           // entrance: dots pop in with a quick scale/alpha ramp at their birth time
           if (!revealDone) {
@@ -140,9 +157,25 @@ export default function DotMatrixText({
               d.fadeAt = t + nextGap()
             }
           }
+
+          // pulse wave boost + halo
+          let r = d.r
+          if (waveX >= 0) {
+            const dw = Math.abs(d.x - waveX)
+            if (dw < BAND) {
+              const boost = 1 - dw / BAND
+              alpha = Math.max(alpha, Math.min(1, BASE + boost * 0.5))
+              r = d.r * (1 + boost * 0.85)
+              ctx.fillStyle = `rgba(${color}, ${boost * 0.3})`
+              ctx.beginPath()
+              ctx.arc(d.x, d.y, d.r * 4.4, 0, Math.PI * 2)
+              ctx.fill()
+            }
+          }
+
           ctx.fillStyle = `rgba(${color}, ${alpha})`
           ctx.beginPath()
-          ctx.arc(d.x, d.y, d.r, 0, Math.PI * 2)
+          ctx.arc(d.x, d.y, r, 0, Math.PI * 2)
           ctx.fill()
         }
         if (!revealDone && allBorn) revealDone = true

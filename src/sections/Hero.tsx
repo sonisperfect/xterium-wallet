@@ -8,6 +8,7 @@ import TerminalReview from '../components/TerminalReview'
 
 export default function Hero() {
   const contentRef = useRef<HTMLDivElement>(null)
+  const spotRef = useRef<HTMLDivElement>(null)
   const [block, setBlock] = useState(8412336)
 
   // gentle parallax: hero content drifts up and fades as you scroll away
@@ -38,12 +39,69 @@ export default function Hero() {
     return () => window.clearInterval(id)
   }, [])
 
+  // mouse spotlight — a soft mint glow that trails the cursor
+  useEffect(() => {
+    const spot = spotRef.current
+    if (!spot) return
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    let tx = -9999
+    let ty = -9999
+    let x = -9999
+    let y = -9999
+    let raf = 0
+    const section = spot.parentElement
+    const onMove = (e: MouseEvent) => {
+      const rect = section?.getBoundingClientRect()
+      if (!rect) return
+      tx = e.clientX - rect.left
+      ty = e.clientY - rect.top
+    }
+    const loop = () => {
+      x += (tx - x) * 0.11
+      y += (ty - y) * 0.11
+      spot.style.transform = `translate(${x - 320}px, ${y - 320}px)`
+      raf = requestAnimationFrame(loop)
+    }
+    section?.addEventListener('mousemove', onMove, { passive: true })
+    raf = requestAnimationFrame(loop)
+    return () => {
+      cancelAnimationFrame(raf)
+      section?.removeEventListener('mousemove', onMove)
+    }
+  }, [])
+
   return (
     <section id="top" className="relative flex min-h-[100svh] flex-col overflow-hidden">
       {/* living dot mesh + blinking lattice + engineering grid */}
       <DotField />
       <BlinkDots gap={26} baseAlpha={0.05} />
       <div className="grid-lines grid-pan pointer-events-none absolute inset-0 opacity-70" aria-hidden="true" />
+
+      {/* drifting aurora glows */}
+      <div
+        className="pointer-events-none absolute -left-40 top-1/4 h-[520px] w-[520px] rounded-full opacity-60"
+        style={{
+          background: 'radial-gradient(circle, rgba(47,224,194,0.08), transparent 62%)',
+          animation: 'float-y 11s ease-in-out infinite',
+        }}
+        aria-hidden="true"
+      />
+      <div
+        className="pointer-events-none absolute -right-32 bottom-0 h-[460px] w-[460px] rounded-full opacity-50"
+        style={{
+          background: 'radial-gradient(circle, rgba(13,148,136,0.12), transparent 60%)',
+          animation: 'float-y 14s ease-in-out infinite reverse',
+        }}
+        aria-hidden="true"
+      />
+
+      {/* cursor spotlight */}
+      <div
+        ref={spotRef}
+        className="pointer-events-none absolute left-0 top-0 h-[640px] w-[640px] rounded-full"
+        style={{ background: 'radial-gradient(circle, rgba(47,224,194,0.09), transparent 58%)' }}
+        aria-hidden="true"
+      />
       <div
         className="pointer-events-none absolute inset-0"
         style={{
