@@ -1,4 +1,4 @@
-import { Apple, Chrome, Play } from 'lucide-react'
+import { Chrome, Play } from 'lucide-react'
 import BlinkDots from '../components/BlinkDots'
 import SectionMarker from '../components/SectionMarker'
 
@@ -20,14 +20,13 @@ const STORES = [
     icon: Play,
     top: 'Get it on',
     name: 'Google Play',
-    href: 'https://play.google.com/store/apps/details?id=com.xterium.wallet',
+    href: 'https://play.google.com/store/apps/details?id=net.xode.xtr',
   },
-  {
-    icon: Apple,
-    top: 'Download on the',
-    name: 'App Store',
-    href: 'https://apps.apple.com/ph/app/xterium/id6745164228',
-  },
+  // No App Store entry: our iOS build (net.xode.xtr, Apple id 6809356501) is
+  // still in review. The link that used to sit here — id6745164228 — is a
+  // different company's app ("Xterium" v2.7.0 by 4NexGen Enterprise
+  // Corporation, bundle com.xterium.wallet), so it sent our users to someone
+  // else's wallet. Add it back once ours is published.
 ]
 
 export default function Download() {
