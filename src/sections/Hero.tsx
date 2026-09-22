@@ -1,209 +1,141 @@
-import { useEffect, useRef, useState } from 'react'
-import DotField from '../components/DotField'
-import BlinkDots from '../components/BlinkDots'
-import DotMatrixText from '../components/DotMatrixText'
-import RotatingBadge from '../components/RotatingBadge'
-import Magnetic from '../components/Magnetic'
-import TerminalReview from '../components/TerminalReview'
+import { useRef, useState } from 'react'
+import { motion, useMotionValueEvent, useReducedMotion, useScroll, useSpring, useTransform, type MotionValue } from 'framer-motion'
+import { ArrowDown, ArrowDownToLine } from 'lucide-react'
+import BlockchainHeading from '../components/BlockchainHeading'
+import DecorativeBlock from '../components/DecorativeBlock'
+import SplitReveal from '../components/SplitReveal'
+import { AppIntroContent } from './AppShowcase'
+import { StatsContent } from './Stats'
+import { useAnchorScroll } from '../hooks/useAnchorScroll'
+import { useRipple } from '../hooks/useRipple'
+import { useIntro } from '../lib/intro'
+
+const EASE = [0.22, 1, 0.36, 1] as const
+
+function HeroSlide({ exit }: { exit?: MotionValue<number> }) {
+  const reduced = useReducedMotion()
+  const { revealed } = useIntro()
+  const onAnchorClick = useAnchorScroll()
+  const { onPointerDown, layer } = useRipple()
+  return (
+    <div className="hero-slide relative flex h-full w-full flex-col items-center justify-center overflow-hidden">
+      <div className="hero-texture pointer-events-none absolute inset-0" aria-hidden="true" />
+      <DecorativeBlock top="20%" left="10%" size={26} color="var(--v-stone)" speed={1.1} spin floatDelay={-1.5} />
+      <DecorativeBlock top="68%" left="88%" size={22} color="var(--v-dirt)" speed={0.8} spin floatDelay={-4} />
+      <div className="relative z-10 mx-auto flex w-full max-w-[1800px] flex-col items-center px-5 text-center sm:px-8">
+        <div className="flex w-full flex-col items-center">
+          <h1 className="font-display mt-4 w-full font-bold">
+            <SplitReveal as="span" text="Your gateway to" className="hero-intro inline-block" active={revealed} />
+            <BlockchainHeading exit={exit} />
+          </h1>
+          <motion.div className="hero-cta"
+            initial={reduced ? false : { opacity: 0, y: 12 }}
+            animate={{ opacity: revealed ? 1 : 0, y: revealed ? 0 : 12 }}
+            transition={{ delay: reduced ? 0 : 0.55, duration: reduced ? 0 : 0.55, ease: EASE }}
+          >
+            <a
+              href="#download"
+              onClick={onAnchorClick}
+              onPointerDown={onPointerDown}
+              className="voxel-btn brand-gradient hero-download relative inline-flex items-center gap-3 overflow-hidden px-9 py-4 text-[15px] font-semibold text-white"
+            >
+              Download the wallet
+              <ArrowDownToLine size={17} strokeWidth={1.8} aria-hidden="true" />
+              {layer}
+            </a>
+          </motion.div>
+        </div>
+      </div>
+      <motion.div
+        initial={reduced ? false : { opacity: 0, y: -6 }}
+        animate={{ opacity: revealed ? 1 : 0, y: revealed ? 0 : -6 }}
+        transition={{ delay: reduced ? 0 : 1.3, duration: reduced ? 0 : 0.7, ease: EASE }}
+        className="absolute bottom-8 left-1/2 z-10 flex -translate-x-1/2 flex-col items-center gap-2"
+      >
+        <span className="font-mono2 text-[10px] uppercase text-faint">Scroll</span>
+        <ArrowDown size={18} strokeWidth={1.6} className="hero-scroll-arrow text-primary/70" aria-hidden="true" />
+      </motion.div>
+    </div>
+  )
+}
+
+function PinnedTabs() {
+  const pinRef = useRef<HTMLDivElement>(null)
+  const [active, setActive] = useState(0)
+  const [statsVisible, setStatsVisible] = useState(false)
+  const { revealed } = useIntro()
+  const { scrollYProgress } = useScroll({ target: pinRef, offset: ['start start', 'end end'] })
+  const progress = useSpring(scrollYProgress, { stiffness: 160, damping: 32, mass: 0.5 })
+  const exit = useTransform(progress, [0.13, 0.33], [0, 1])
+  const heroOpacity = useTransform(progress, [0, 0.19, 0.33], [1, 1, 0])
+  const heroY = useTransform(progress, [0.16, 0.33], [0, -36])
+  const statsOpacity = useTransform(progress, [0.29, 0.4, 0.53, 0.66], [0, 1, 1, 0])
+  const statsY = useTransform(progress, [0.29, 0.4, 0.53, 0.66], [52, 0, 0, -44])
+  const statsScale = useTransform(progress, [0.29, 0.4], [0.96, 1])
+  const appOpacity = useTransform(progress, [0.62, 0.75], [0, 1])
+  const appY = useTransform(progress, [0.62, 0.75], [52, 0])
+
+  useMotionValueEvent(progress, 'change', (value) => {
+    const next = value < 0.31 ? 0 : value < 0.64 ? 1 : 2
+    setActive((previous) => previous === next ? previous : next)
+  })
+
+  // Pinned layers intersect the viewport even while transparent. Start at a visible
+  // opacity, and reset only once fully hidden so the outgoing numbers never jump.
+  useMotionValueEvent(statsOpacity, 'change', (opacity) => {
+    setStatsVisible((previous) => opacity >= 0.65 ? true : opacity <= 0.01 ? false : previous)
+  })
+
+  // Keep the scene mounted so reversing a scroll never restarts its entrance or WebGL context.
+  return (
+    <div ref={pinRef} className="snap-section relative" style={{ height: '300svh' }} data-hero-sequence>
+      <div id="top" className="pointer-events-none absolute inset-x-0 top-0 h-px" aria-hidden="true" />
+      <div className="hero-pin sticky top-0 overflow-hidden">
+        <motion.div
+          style={{ opacity: heroOpacity, y: heroY }}
+          className="absolute inset-0"
+          aria-hidden={active !== 0}
+          inert={active !== 0}
+          data-hero-slide="hero"
+        >
+          <HeroSlide exit={exit} />
+        </motion.div>
+        <motion.div
+          style={{ opacity: statsOpacity, y: statsY, scale: statsScale }}
+          className="absolute inset-0 flex items-center"
+          aria-hidden={active !== 1}
+          inert={active !== 1}
+          data-hero-slide="stats"
+        >
+          <div className="relative mx-auto w-full max-w-7xl px-5 sm:px-8"><StatsContent active={statsVisible && revealed} /></div>
+        </motion.div>
+        <motion.div
+          style={{ opacity: appOpacity, y: appY }}
+          className="absolute inset-0 flex items-center"
+          aria-hidden={active !== 2}
+          inert={active !== 2}
+          data-hero-slide="app"
+        >
+          <div className="relative mx-auto w-full max-w-7xl px-5 sm:px-8"><AppIntroContent /></div>
+        </motion.div>
+      </div>
+    </div>
+  )
+}
 
 export default function Hero() {
-  const contentRef = useRef<HTMLDivElement>(null)
-  const spotRef = useRef<HTMLDivElement>(null)
-  const [block, setBlock] = useState(8412336)
-
-  // gentle parallax: hero content drifts up and fades as you scroll away
-  useEffect(() => {
-    let raf = 0
-    const onScroll = () => {
-      cancelAnimationFrame(raf)
-      raf = requestAnimationFrame(() => {
-        const el = contentRef.current
-        if (!el) return
-        const y = window.scrollY
-        if (y < window.innerHeight * 1.2) {
-          el.style.transform = `translateY(${y * 0.22}px)`
-          el.style.opacity = String(Math.max(0.25, 1 - y / (window.innerHeight * 0.85)))
-        }
-      })
-    }
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => {
-      cancelAnimationFrame(raf)
-      window.removeEventListener('scroll', onScroll)
-    }
-  }, [])
-
-  // ambient chain ticker — decorative block counter
-  useEffect(() => {
-    const id = window.setInterval(() => setBlock((b) => b + 1), 2400)
-    return () => window.clearInterval(id)
-  }, [])
-
-  // mouse spotlight — a soft mint glow that trails the cursor
-  useEffect(() => {
-    const spot = spotRef.current
-    if (!spot) return
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
-    let tx = -9999
-    let ty = -9999
-    let x = -9999
-    let y = -9999
-    let raf = 0
-    const section = spot.parentElement
-    const onMove = (e: MouseEvent) => {
-      const rect = section?.getBoundingClientRect()
-      if (!rect) return
-      tx = e.clientX - rect.left
-      ty = e.clientY - rect.top
-    }
-    const loop = () => {
-      x += (tx - x) * 0.11
-      y += (ty - y) * 0.11
-      spot.style.transform = `translate(${x - 320}px, ${y - 320}px)`
-      raf = requestAnimationFrame(loop)
-    }
-    section?.addEventListener('mousemove', onMove, { passive: true })
-    raf = requestAnimationFrame(loop)
-    return () => {
-      cancelAnimationFrame(raf)
-      section?.removeEventListener('mousemove', onMove)
-    }
-  }, [])
-
-  return (
-    <section id="top" className="relative flex min-h-[100svh] flex-col overflow-hidden">
-      {/* living dot mesh + blinking lattice + engineering grid */}
-      <DotField />
-      <BlinkDots gap={26} baseAlpha={0.05} />
-      <div className="grid-lines grid-pan pointer-events-none absolute inset-0 opacity-70" aria-hidden="true" />
-
-      {/* drifting aurora glows */}
-      <div
-        className="pointer-events-none absolute -left-40 top-1/4 h-[520px] w-[520px] rounded-full opacity-60"
-        style={{
-          background: 'radial-gradient(circle, rgba(47,224,194,0.08), transparent 62%)',
-          animation: 'float-y 11s ease-in-out infinite',
-        }}
-        aria-hidden="true"
-      />
-      <div
-        className="pointer-events-none absolute -right-32 bottom-0 h-[460px] w-[460px] rounded-full opacity-50"
-        style={{
-          background: 'radial-gradient(circle, rgba(13,148,136,0.12), transparent 60%)',
-          animation: 'float-y 14s ease-in-out infinite reverse',
-        }}
-        aria-hidden="true"
-      />
-
-      {/* cursor spotlight */}
-      <div
-        ref={spotRef}
-        className="pointer-events-none absolute left-0 top-0 h-[640px] w-[640px] rounded-full"
-        style={{ background: 'radial-gradient(circle, rgba(47,224,194,0.09), transparent 58%)' }}
-        aria-hidden="true"
-      />
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background:
-            'radial-gradient(ellipse 70% 55% at 50% 0%, rgba(47,224,194,0.09), transparent 65%), radial-gradient(ellipse 90% 60% at 50% 110%, rgba(4,19,15,0.9), transparent 70%)',
-        }}
-        aria-hidden="true"
-      />
-
-      <div
-        ref={contentRef}
-        className="relative z-10 mx-auto flex w-full max-w-7xl flex-1 flex-col justify-center px-5 pt-36 pb-24 will-change-transform sm:px-8"
-      >
-        <div className="grid items-center gap-14 lg:grid-cols-[1.15fr_0.85fr]">
-          <div>
-            <p className="font-mono2 mb-8 flex items-center gap-3 text-[11px] uppercase tracking-[0.28em] text-faint">
-              <span className="text-primary">00</span>
-              <span className="inline-block h-px w-8 bg-[rgba(47,224,194,0.35)]" aria-hidden="true" />
-              <span className="text-dim">Browser extension · Xode ecosystem</span>
-            </p>
-
-            <h1 className="font-display max-w-5xl text-[11vw] leading-[0.98] font-bold tracking-[-0.03em] sm:text-[7.5vw] lg:text-[4.9rem]">
-              <span className="rise-in inline-block" style={{ animationDelay: '150ms' }}>Your gateway to</span>
-            </h1>
-
-            {/* classic dot-matrix headline — dots settle and blink like an LED board */}
-            <div className="rise-in mt-2 max-w-3xl" style={{ animationDelay: '300ms' }}>
-              <DotMatrixText text="BLOCKCHAIN." height={130} gap={6} />
-            </div>
-            <p className="sr-only">Your gateway to blockchain.</p>
-
-            <div className="mt-10 flex max-w-2xl flex-col gap-8">
-              <p className="rise-in text-base leading-relaxed text-dim sm:text-lg" style={{ animationDelay: '0.5s' }}>
-                Secure, seamless, and powerful. Manage digital assets and interact with
-                Xode dApps — right from your browser.
-              </p>
-
-              <div className="rise-in flex flex-wrap items-center gap-4" style={{ animationDelay: '0.62s' }}>
-                <Magnetic>
-                  <a
-                    href="#download"
-                    className="group inline-flex items-center gap-3 rounded-full bg-primary px-8 py-4 text-[15px] font-semibold tracking-tight text-[#04130f] transition-shadow duration-300 hover:shadow-[0_0_36px_rgba(47,224,194,0.45)]"
-                  >
-                    Download the wallet
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="transition-transform duration-300 group-hover:translate-x-1">
-                      <path d="M2 8h11M9 3.5 13.5 8 9 12.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </a>
-                </Magnetic>
-                <Magnetic strength={0.2}>
-                  <a
-                    href="#how-it-works"
-                    className="inline-flex items-center gap-3 rounded-full border border-[rgba(239,250,246,0.25)] px-8 py-4 text-[15px] font-medium transition-colors duration-300 hover:border-primary hover:text-primary"
-                  >
-                    See how it works
-                  </a>
-                </Magnetic>
-              </div>
-
-              <div className="rise-in font-mono2 flex flex-wrap items-center gap-x-8 gap-y-3 text-[12px] uppercase tracking-[0.16em] text-dim" style={{ animationDelay: '0.74s' }}>
-                <span className="flex items-center gap-2">
-                  <span className="relative flex h-1.5 w-1.5">
-                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-70" />
-                    <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-primary" />
-                  </span>
-                  Live on Xode mainnet
-                </span>
-                <span>Keys stay on-device</span>
-                <span>
-                  Open for every node<span className="blink text-primary">_</span>
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* signing terminal — the product's review flow, drawn in code */}
-          <div className="rise-in float-y relative hidden lg:block" style={{ animationDelay: '0.55s' }}>
-            <TerminalReview />
-          </div>
-        </div>
-      </div>
-
-      {/* rotating circular CTA */}
-      <div className="absolute right-10 bottom-28 z-10 hidden md:block lg:right-16">
-        <RotatingBadge href="#download" />
-      </div>
-
-      {/* bottom hairline + chain readout */}
-      <div className="relative z-10 mx-auto w-full max-w-7xl px-5 pb-8 sm:px-8">
-        <div className="flex items-center justify-between border-t border-line pt-5">
-          <span className="font-mono2 text-[11px] uppercase tracking-[0.2em] text-dim">
-            Xterium Wallet — v2
-          </span>
-          <span className="font-mono2 hidden items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-faint sm:flex">
-            <span className="pulse-dot h-1.5 w-1.5 rounded-full bg-primary" />
-            synced · block #{block.toLocaleString('en-US')}
-          </span>
-          <span className="font-mono2 hidden text-[11px] uppercase tracking-[0.2em] text-dim md:block">
-            Scroll to explore ↓
-          </span>
-        </div>
-      </div>
-    </section>
-  )
+  const reduced = useReducedMotion()
+  if (reduced) {
+    return (
+      <>
+        <section id="top" className="hero-static snap-section relative">
+          <HeroSlide />
+        </section>
+        <section id="stats" className="snap-section relative flex min-h-[100svh] items-center border-t border-line py-24">
+          <div className="relative mx-auto w-full max-w-7xl px-5 sm:px-8"><StatsContent /></div>
+        </section>
+      </>
+    )
+  }
+  return <PinnedTabs />
 }
