@@ -73,7 +73,7 @@ function Screenshot({ active, id }: { active: number; id: string }) {
             loading="lazy" decoding="async" draggable={false} aria-hidden={index !== active}
             initial={false}
             animate={{ opacity: index === active ? 1 : 0 }}
-            transition={{ duration: reduced ? 0 : 0.32, ease: EASE }}
+            transition={{ duration: reduced ? 0 : 0.4, ease: EASE }}
             style={{ zIndex: index === active ? 1 : 0 }}
           />
         ))}
@@ -102,10 +102,10 @@ function ScreenCopy({ active }: { active: number }) {
   return (
     <AnimatePresence mode="wait" initial={false}>
       <motion.div key={active} className="showcase-copy" aria-live="polite" aria-atomic="true"
-        initial={reduced ? false : { opacity: 0, y: 12 }}
+        initial={reduced ? false : { opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: reduced ? 0 : -8 }}
-        transition={{ duration: reduced ? 0 : 0.22, ease: EASE }}
+        exit={{ opacity: 0, y: reduced ? 0 : -4 }}
+        transition={{ duration: reduced ? 0 : 0.16, ease: EASE }}
       >
         <span className="font-mono2 text-[11px] text-primary">0{active + 1} / 05</span>
         <h3 className="font-display mt-3 text-2xl font-semibold leading-tight">{SCREENS[active].title}</h3>

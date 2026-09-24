@@ -49,9 +49,9 @@ export default function BlockchainHeading({ exit }: { exit?: MotionValue<number>
 
   return (
     <motion.span className="blockchain-heading" data-ready={ready}
-      initial={reduced ? false : { opacity: 0, scale: 0.62 }}
-      animate={{ opacity: revealed ? 1 : 0, scale: reduced || revealed ? 1 : 0.62 }}
-      transition={{ delay: reduced ? 0 : 0.12, duration: reduced ? 0 : 1.05, ease: [0.22, 1, 0.36, 1] }}
+      initial={reduced ? false : { opacity: 0, scale: 0.94 }}
+      animate={{ opacity: revealed ? 1 : 0, scale: reduced || revealed ? 1 : 0.94 }}
+      transition={{ delay: reduced ? 0 : 0.12, duration: reduced ? 0 : 0.8, ease: [0.22, 1, 0.36, 1] }}
     >
       <span className="sr-only">BLOCKCHAIN.</span>
       <span className="blockchain-heading-fallback" aria-hidden="true">

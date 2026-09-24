@@ -65,15 +65,15 @@ function PinnedTabs() {
   const [statsVisible, setStatsVisible] = useState(false)
   const { revealed } = useIntro()
   const { scrollYProgress } = useScroll({ target: pinRef, offset: ['start start', 'end end'] })
-  const progress = useSpring(scrollYProgress, { stiffness: 160, damping: 32, mass: 0.5 })
+  const progress = useSpring(scrollYProgress, { stiffness: 180, damping: 30, mass: 0.6 })
   const exit = useTransform(progress, [0.13, 0.33], [0, 1])
   const heroOpacity = useTransform(progress, [0, 0.19, 0.33], [1, 1, 0])
-  const heroY = useTransform(progress, [0.16, 0.33], [0, -36])
+  const heroY = useTransform(progress, [0.16, 0.33], [0, -24])
   const statsOpacity = useTransform(progress, [0.29, 0.4, 0.53, 0.66], [0, 1, 1, 0])
-  const statsY = useTransform(progress, [0.29, 0.4, 0.53, 0.66], [52, 0, 0, -44])
-  const statsScale = useTransform(progress, [0.29, 0.4], [0.96, 1])
+  const statsY = useTransform(progress, [0.29, 0.4, 0.53, 0.66], [32, 0, 0, -28])
+  const statsScale = useTransform(progress, [0.29, 0.4], [0.985, 1])
   const appOpacity = useTransform(progress, [0.62, 0.75], [0, 1])
-  const appY = useTransform(progress, [0.62, 0.75], [52, 0])
+  const appY = useTransform(progress, [0.62, 0.75], [32, 0])
 
   useMotionValueEvent(progress, 'change', (value) => {
     const next = value < 0.31 ? 0 : value < 0.64 ? 1 : 2
