@@ -1,163 +1,184 @@
-import BlinkDots from '../components/BlinkDots'
+import { useId, useRef, useState, useSyncExternalStore } from 'react'
+import { AnimatePresence, motion, useMotionValueEvent, useReducedMotion, useScroll } from 'framer-motion'
+import { ArrowLeft, ArrowRight } from 'lucide-react'
 import SectionMarker from '../components/SectionMarker'
-import WalletMock from '../components/WalletMock'
+import DecorativeBlock from '../components/DecorativeBlock'
+import { Reveal } from '../components/Reveal'
+import SegmentedReveal from '../components/SegmentedReveal'
+import SplitReveal from '../components/SplitReveal'
+
+const EASE = [0.22, 1, 0.36, 1] as const
+const DESKTOP_QUERY = '(min-width: 1024px) and (min-height: 620px)'
 
 const SCREENS = [
   {
-    src: '/assets/gen/clean/screen-biometric.png',
-    title: 'Biometric unlock',
-    desc: 'Unlock and sign with biometrics — your data stays encrypted locally.',
+    id: 'portfolio', label: 'Portfolio', src: '/assets/app/portfolio.jpg',
+    title: 'Your portfolio, together.',
+    desc: 'Balances, assets, and everyday wallet actions in one view.',
+    alt: 'Xterium portfolio with the total balance, wallet actions, and assets across XODE and Polkadot Asset Hub.',
   },
   {
-    src: '/assets/gen/clean/screen-pay.png',
-    title: 'Pay with review',
-    desc: 'Every payment shows token, amount, price, and recipient before you confirm.',
+    id: 'tokens', label: 'Tokens', src: '/assets/app/tokens.jpg',
+    title: 'The right token. The right chain.',
+    desc: 'Choose an asset with its network and available balance clearly in view.',
+    alt: 'Xterium token selector showing XODE, Tether USD, Xaver, DOT, and USD Coin with their networks and balances.',
   },
   {
-    src: '/assets/gen/clean/screen-wallets.png',
-    title: 'Multi-wallet management',
-    desc: 'Create, import, and switch between wallets across networks in one place.',
+    id: 'send', label: 'Send', src: '/assets/app/send.jpg',
+    title: 'Send with confidence.',
+    desc: 'Paste an address, scan a QR code, or choose a contact. Set the amount and keep your account active.',
+    alt: 'Xterium USDT send screen with recipient address, paste, scan and contact options, transfer keep-alive, and amount.',
+  },
+  {
+    id: 'staking', label: 'Staking', src: '/assets/app/staking.jpg',
+    title: 'Put your XON to work.',
+    desc: 'View your stake, explore active collators, and delegate directly from your wallet.',
+    alt: 'Xterium staking screen with staked and available XON, active collators, and the quick-stake action.',
+  },
+  {
+    id: 'governance', label: 'Governance', src: '/assets/app/governance.jpg',
+    title: 'Follow on-chain decisions.',
+    desc: 'See council members, open proposals, and voting progress in XODE governance.',
+    alt: 'Xterium governance screen with council members, open proposals, and aye and nay voting progress.',
   },
 ]
 
-const STORE_SHOTS = [
-  { src: '/assets/store/welcome.png', label: 'Welcome & login' },
-  { src: '/assets/store/balance.png', label: 'Total balance' },
-  { src: '/assets/store/qr-pay.png', label: 'Scan QR to pay' },
-  { src: '/assets/store/history.png', label: 'Payments & transfers' },
-  { src: '/assets/store/explore.png', label: 'Explore services' },
-]
+function subscribeDesktop(callback: () => void) {
+  const media = window.matchMedia(DESKTOP_QUERY)
+  media.addEventListener('change', callback)
+  return () => media.removeEventListener('change', callback)
+}
 
-export default function AppShowcase() {
+export function AppIntroContent() {
   return (
-    <section id="showcase" className="relative overflow-hidden border-t border-line py-28">
-      <BlinkDots gap={26} baseAlpha={0.06} />
-      <div className="relative mx-auto max-w-7xl px-5 sm:px-8">
-        <SectionMarker no="02" label="The app" />
-        <h2 className="font-display mt-5 max-w-3xl text-4xl font-bold leading-[1.02] tracking-[-0.02em] md:text-6xl">
-          Your assets,
-          <br />
-          <span className="text-mint-soft">clearly in view.</span>
-        </h2>
+    <Reveal variant="slide-left">
+      <SectionMarker no="02" label="The app" />
+      <h2 className="font-display mt-5 max-w-3xl text-5xl font-bold leading-[0.98] tracking-[-0.02em] md:text-7xl">
+        <SplitReveal as="span" text="Your assets," />
+        <br />
+        <SegmentedReveal as="span" text="clearly in view." className="app-intro-heading voxel-heading font-pixel block leading-[1.45] tracking-normal md:leading-[1.2]" />
+      </h2>
+    </Reveal>
+  )
+}
 
-        <div className="mt-16 grid items-center gap-14 lg:grid-cols-[0.9fr_1.1fr]">
-          {/* real app screenshot */}
-          <div className="relative mx-auto">
-            <div
-              className="pointer-events-none absolute inset-0"
-              style={{ background: 'radial-gradient(ellipse 60% 55% at 50% 45%, rgba(47,224,194,0.16), transparent 70%)' }}
-              aria-hidden="true"
-            />
-            <img
-              src="/assets/why-xterium.png"
-              alt="Xterium Wallet app — portfolio, tokens, send and swap"
-              className="lift relative mx-auto w-full max-w-[360px]"
-            />
-          </div>
+function Screenshot({ active, id }: { active: number; id: string }) {
+  const reduced = useReducedMotion()
+  return (
+    <div role="group" aria-roledescription="slide" id={id + '-screen'}
+      aria-label={`${SCREENS[active].label}, ${active + 1} of ${SCREENS.length}`} className="showcase-image-panel">
+      <div className="app-screenshot">
+        {SCREENS.map((item, index) => (
+          <motion.img key={item.id} src={item.src} alt={item.alt} width="946" height="2049"
+            loading="lazy" decoding="async" draggable={false} aria-hidden={index !== active}
+            initial={false}
+            animate={{ opacity: index === active ? 1 : 0 }}
+            transition={{ duration: reduced ? 0 : 0.4, ease: EASE }}
+            style={{ zIndex: index === active ? 1 : 0 }}
+          />
+        ))}
+      </div>
+    </div>
+  )
+}
 
-          <div>
-            <ul className="space-y-0">
-              {[
-                ['Real-time portfolio', 'Total balance with per-token breakdown and 24h change.'],
-                ['One-tap Send / Receive / Swap', 'Core actions surfaced directly on the balance screen.'],
-                ['Explore & history built in', 'Track every transaction and discover Xode dApps.'],
-              ].map(([t, d], i) => (
-                <li key={t} className="flex gap-5 border-t border-line-soft py-6 last:border-b">
-                  <span className="font-mono2 mt-1 text-[11px] tracking-[0.18em] text-primary/80">/0{i + 1}</span>
-                  <div>
-                    <p className="font-display text-lg font-semibold">{t}</p>
-                    <p className="mt-1.5 text-sm leading-relaxed text-dim">{d}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
+function ScreenControls({ active, onChange, id }: { active: number; onChange: (index: number) => void; id: string }) {
+  return (
+    <div className="showcase-arrows" role="group" aria-label="Screenshot navigation">
+      <button type="button" onClick={() => onChange((active + SCREENS.length - 1) % SCREENS.length)}
+        aria-controls={id + '-screen'} aria-label="Previous app screen" title="Previous app screen">
+        <ArrowLeft size={18} aria-hidden="true" />
+      </button>
+      <button type="button" onClick={() => onChange((active + 1) % SCREENS.length)}
+        aria-controls={id + '-screen'} aria-label="Next app screen" title="Next app screen">
+        <ArrowRight size={18} aria-hidden="true" />
+      </button>
+    </div>
+  )
+}
+
+function ScreenCopy({ active }: { active: number }) {
+  const reduced = useReducedMotion()
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div key={active} className="showcase-copy" aria-live="polite" aria-atomic="true"
+        initial={reduced ? false : { opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: reduced ? 0 : -4 }}
+        transition={{ duration: reduced ? 0 : 0.16, ease: EASE }}
+      >
+        <span className="font-mono2 text-[11px] text-primary">0{active + 1} / 05</span>
+        <h3 className="font-display mt-3 text-2xl font-semibold leading-tight">{SCREENS[active].title}</h3>
+        <p className="mt-3 text-sm leading-relaxed text-dim">{SCREENS[active].desc}</p>
+      </motion.div>
+    </AnimatePresence>
+  )
+}
+
+function SimpleShowcase() {
+  const [active, setActive] = useState(0)
+  const id = useId()
+  return (
+    <div className="showcase-simple" data-showcase-mode="gallery">
+      <div className="showcase-simple-layout">
+        <div className="showcase-preview">
+          <Screenshot active={active} id={id} />
+          <ScreenControls active={active} onChange={setActive} id={id} />
         </div>
-
-        {/* official Chrome Web Store screenshots — freshly captured from the store listing */}
-        <div className="mt-20">
-          <div className="flex flex-wrap items-baseline justify-between gap-4">
-            <h3 className="font-display text-2xl font-semibold tracking-tight">
-              Fresh from the <span className="text-primary">Chrome Web Store</span>
-            </h3>
-            <p className="font-mono2 text-[11px] uppercase tracking-[0.18em] text-dim">
-              official listing screenshots<span className="blink text-primary">_</span>
-            </p>
-          </div>
-          <div className="scroll-slim mt-8 flex gap-5 overflow-x-auto pb-4">
-            {STORE_SHOTS.map((s) => (
-              <figure key={s.src} className="lift group w-[420px] shrink-0 overflow-hidden rounded-lg border border-[rgba(239,250,246,0.09)] bg-panel transition-colors duration-300 hover:border-[rgba(47,224,194,0.4)]">
-                {/* window chrome — artifact framing */}
-                <div className="flex items-center justify-between border-b border-line-soft px-4 py-2">
-                  <div className="flex items-center gap-1.5">
-                    <span className="h-1.5 w-1.5 rounded-full bg-white/15" />
-                    <span className="h-1.5 w-1.5 rounded-full bg-white/15" />
-                    <span className="h-1.5 w-1.5 rounded-full bg-primary/60" />
-                  </div>
-                  <span className="spec-label">{s.label.toLowerCase().replace(/\s+/g, '-')}.png</span>
-                </div>
-                <img
-                  src={s.src}
-                  alt={`Xterium extension — ${s.label}`}
-                  className="aspect-[8/5] w-full object-cover object-top transition-transform duration-500 group-hover:scale-[1.02]"
-                />
-                <figcaption className="font-mono2 flex items-center gap-2 border-t border-line-soft px-5 py-3 text-[11px] uppercase tracking-[0.18em] text-dim">
-                  <span className="pulse-dot h-1.5 w-1.5 rounded-full bg-primary" />
-                  {s.label}
-                </figcaption>
-              </figure>
-            ))}
-          </div>
+        <div className="showcase-simple-details">
+          <ScreenCopy active={active} />
         </div>
+      </div>
+    </div>
+  )
+}
 
-        {/* real feature screenshots */}
-        <div className="mt-20 grid gap-5 md:grid-cols-3">
-          {SCREENS.map((s, i) => (
-            <article key={s.title} className="lift group overflow-hidden rounded-lg border border-[rgba(239,250,246,0.09)] bg-panel transition-colors duration-300 hover:border-[rgba(47,224,194,0.4)]">
-              <div className="dot-grid-fine relative flex h-[340px] items-center justify-center border-b border-line-soft bg-black/30 p-6">
-                <img
-                  src={s.src}
-                  alt={s.title}
-                  className="max-h-full w-auto object-contain transition-transform duration-500 group-hover:scale-[1.03]"
-                />
-                <span className="spec-label absolute bottom-2.5 left-3">fig.0{i + 5}</span>
-              </div>
-              <div className="p-6">
-                <h3 className="font-display text-lg font-semibold">{s.title}</h3>
-                <p className="mt-2 text-sm leading-relaxed text-dim">{s.desc}</p>
-              </div>
-            </article>
-          ))}
-        </div>
+function SyncedShowcase() {
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const [active, setActive] = useState(0)
+  const id = useId()
+  const { scrollYProgress } = useScroll({ target: wrapRef, offset: ['start start', 'end end'] })
 
-        {/* live interactive demo */}
-        <div className="mt-24 grid items-center gap-12 lg:grid-cols-[1fr_auto]">
-          <div>
-            <p className="font-mono2 flex items-center gap-3 text-[11px] uppercase tracking-[0.28em] text-faint">
-              <span className="inline-block h-1.5 w-1.5 rounded-full bg-primary" />
-              <span className="text-dim">Live demo — runs locally</span>
-            </p>
-            <h3 className="font-display mt-5 text-3xl font-bold leading-tight tracking-[-0.02em] md:text-4xl">
-              Don't take our word for it —
-              <br />
-              <span className="text-outline">click the wallet.</span>
-            </h3>
-            <p className="mt-5 max-w-md leading-relaxed text-dim">
-              A working miniature of the extension runs right here. Switch tabs, copy the address,
-              and run the full Send flow — review, sign, confirm — exactly like the real thing.
-            </p>
-            <div className="font-mono2 mt-7 flex flex-wrap gap-x-8 gap-y-2 text-[11px] uppercase tracking-[0.18em] text-dim">
-              <span className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-primary" /> No sign-up</span>
-              <span className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-primary" /> No real funds</span>
-              <span className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full bg-primary" /> Purely local</span>
+  useMotionValueEvent(scrollYProgress, 'change', (value) => {
+    const next = Math.min(SCREENS.length - 1, Math.max(0, Math.floor(value * SCREENS.length)))
+    setActive((previous) => previous === next ? previous : next)
+  })
+
+  function selectScreen(index: number) {
+    const element = wrapRef.current
+    if (!element) return
+    const top = element.getBoundingClientRect().top + window.scrollY
+    const distance = element.offsetHeight - window.innerHeight
+    window.scrollTo({ top: top + distance * ((index + 0.5) / SCREENS.length), behavior: 'smooth' })
+  }
+
+  return (
+    <div ref={wrapRef} className="showcase-sequence" data-showcase-mode="scroll">
+      <div className="showcase-sticky">
+        <div className="showcase-desktop-layout">
+          <div className="showcase-desktop-copy"><ScreenCopy active={active} /></div>
+          <Screenshot active={active} id={id} />
+          <div className="showcase-desktop-navigation">
+            <div className="showcase-desktop-index font-mono2" aria-hidden="true">
+              <span>0{active + 1}</span><span>/ 05</span>
             </div>
-          </div>
-          <div className="relative mx-auto">
-            <div className="absolute -inset-5 rounded-xl border border-[rgba(47,224,194,0.2)]" aria-hidden="true" />
-            <WalletMock />
+            <ScreenControls active={active} onChange={selectScreen} id={id} />
           </div>
         </div>
       </div>
+    </div>
+  )
+}
+
+export default function AppShowcase() {
+  const reduced = useReducedMotion()
+  const desktop = useSyncExternalStore(subscribeDesktop, () => window.matchMedia(DESKTOP_QUERY).matches, () => false)
+  return (
+    <section id="showcase" className="app-showcase snap-section relative border-t border-line">
+      <DecorativeBlock top="8%" left="88%" size={28} color="var(--v-grass)" speed={1.1} spin floatDelay={-2.5} />
+      <DecorativeBlock top="60%" left="6%" size={24} color="var(--v-stone)" speed={0.75} floatDelay={-5} />
+      {reduced && <div className="mx-auto max-w-7xl px-5 pt-24 sm:px-8"><AppIntroContent /></div>}
+      {desktop && !reduced ? <SyncedShowcase /> : <SimpleShowcase />}
     </section>
   )
 }
