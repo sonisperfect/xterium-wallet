@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Link } from 'react-router'
 import { Facebook, MessageCircle, Send, Twitter, Youtube } from 'lucide-react'
 import LogoMark from '../components/LogoMark'
 import { Reveal, RevealGroup } from '../components/Reveal'
@@ -70,6 +71,11 @@ export default function Footer() {
                 >
                   Chrome Web Store
                 </a>
+              </li>
+              <li>
+                <Link to="/privacy-policy" className="text-dim transition-colors hover:text-primary">
+                  Privacy Policy
+                </Link>
               </li>
             </ul>
           </Reveal>
