@@ -74,8 +74,8 @@ async function checkViewport(name, width, height, reduced = false) {
     assert(Math.abs(entranceScales.at(-1) - 1) < 0.002, `${name}: entrance did not settle at full size`)
     if (reduced) assert(entranceScales.every((scale) => Math.abs(scale - 1) < 0.002), `${name}: reduced motion still zooms`)
     else {
-      assert(Math.min(...entranceScales) < 0.7, `${name}: entrance did not start zoomed out`)
-      assert(entranceScales.some((scale) => scale > 0.7 && scale < 0.97), `${name}: entrance did not animate through the zoom`)
+      assert(Math.min(...entranceScales) < 0.95, `${name}: entrance did not start zoomed out`)
+      assert(entranceScales.some((scale) => scale > 0.95 && scale < 0.995), `${name}: entrance did not animate through the zoom`)
       assert(entranceScales.every((scale, index) => !index || scale >= entranceScales[index - 1] - 0.002), `${name}: entrance zoom reversed`)
     }
     const scene = page.locator('.blockchain-heading-scene')
@@ -113,7 +113,8 @@ async function checkViewport(name, width, height, reduced = false) {
       await page.waitForTimeout(600)
       await page.screenshot({ path: `${out}/hero-pointer.png` })
       const originalCanvas = await page.locator('.blockchain-heading canvas').elementHandle()
-      for (const [progress, active] of [[0.45, 'stats'], [0.85, 'app'], [0.45, 'stats'], [0, 'hero']]) {
+      // the curtains part onto the cream app stage, and the nav flips to ink with them
+      for (const [progress, active, tone] of [[0.3, 'app', 'light'], [0.6, 'app', 'light'], [0.05, 'hero', 'dark'], [0, 'hero', 'dark']]) {
         await page.evaluate((p) => {
           const section = document.querySelector('[data-hero-sequence]')
           window.scrollTo({ top: section.offsetTop + (section.offsetHeight - innerHeight) * p, behavior: 'instant' })
@@ -122,7 +123,8 @@ async function checkViewport(name, width, height, reduced = false) {
         assert.equal(await page.locator(`[data-hero-slide="${active}"]`).getAttribute('aria-hidden'), 'false')
         const inactive = await page.locator('[data-hero-slide][aria-hidden="true"]').evaluateAll((elements) => elements.every((el) => el.inert))
         assert(inactive, 'Inactive slide can receive focus')
-        await page.screenshot({ path: `${out}/hero-scroll-${active}.png` })
+        assert.equal(await page.locator('header').getAttribute('data-tone'), tone, `Nav tone at ${progress}`)
+        await page.screenshot({ path: `${out}/hero-scroll-${active}-${progress}.png` })
       }
       assert(await originalCanvas.evaluate((canvas) => canvas === document.querySelector('.blockchain-heading canvas')), 'Scroll recreated the canvas')
       await originalCanvas.evaluate((canvas) => {
@@ -146,16 +148,41 @@ async function checkViewport(name, width, height, reduced = false) {
       assert(first.equals(await scene.screenshot()), `${name}: reduced-motion canvas changed`)
       assert.equal(await page.locator('[data-hero-sequence]').count(), 0)
     }
-    if (['mobile', 'small', 'landscape'].includes(name)) {
-      for (const [progress, active] of [[0.45, 'stats'], [0.85, 'app']]) {
+    // short viewports (landscape phones) flow instead of pinning
+    const staged = await page.locator('[data-hero-sequence]').count() > 0
+    assert.equal(staged, !reduced && height >= 560, `${name}: wrong layout mode`)
+    if (staged) {
+      // the heading moment, the second screen, and the last screen
+      for (const progress of [0.3, 0.55, 0.91]) {
         await page.evaluate((p) => {
           const section = document.querySelector('[data-hero-sequence]')
           window.scrollTo({ top: section.offsetTop + (section.offsetHeight - innerHeight) * p, behavior: 'instant' })
         }, progress)
         await page.waitForTimeout(1000)
-        const bounds = await page.locator(`[data-hero-slide="${active}"] > div`).boundingBox()
-        assert(bounds.y >= 67 && bounds.y + bounds.height <= height, `${name}: ${active} slide does not fit`)
-        await page.screenshot({ path: `${out}/hero-${name}-${active}.png` })
+        const fit = await page.evaluate(() => {
+          const stage = document.querySelector('[data-hero-slide="app"]')
+          const box = (selector) => {
+            const bounds = stage.querySelector(selector)?.getBoundingClientRect()
+            return bounds && { top: bounds.top, bottom: bounds.bottom, left: bounds.left, right: bounds.right }
+          }
+          // the glyphs themselves, not the offset shadow copy behind them
+          const text = document.createRange()
+          text.selectNodeContents(stage.querySelector('.stage-heading .voxel-heading'))
+          const glyphs = text.getBoundingClientRect()
+          return {
+            phone: box('.phone-frame'), card: box('.tour-card[aria-hidden="false"]'), controls: box('.stage-controls'),
+            headingOverflow: Math.max(0, -glyphs.left, glyphs.right - innerWidth), headingLines: text.getClientRects().length,
+          }
+        })
+        for (const key of ['phone', 'card', 'controls']) {
+          const bounds = fit[key]
+          if (!bounds) continue
+          assert(bounds.top >= 60 && bounds.bottom <= height && bounds.left >= 0 && bounds.right <= width,
+            `${name}: ${key} does not fit at ${progress}: ${JSON.stringify(bounds)}`)
+        }
+        assert(progress < 0.37 || fit.card, `${name}: no card at ${progress}`)
+        assert(fit.headingOverflow <= 1 && fit.headingLines === 1, `${name}: stage heading overflows or wraps`)
+        await page.screenshot({ path: `${out}/hero-${name}-stage-${progress}.png` })
       }
     }
     assert.deepEqual(errors, [], `${name}: browser errors`)

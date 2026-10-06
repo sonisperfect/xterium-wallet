@@ -11,3 +11,17 @@ export const BG_RGB = '8, 7, 13' // --x-bg
 export const BG_DEEP_RGB = '4, 3, 8' // --x-bg-deep
 export const PANEL_RGB = '21, 20, 31' // --x-panel
 export const PANEL_2_RGB = '30, 28, 43' // --x-panel-2
+
+/** Full-bleed section colours (the `.surface-*` classes in index.css). */
+export type Surface = 'ink' | 'panel' | 'cream' | 'purple' | 'mint'
+
+export const SURFACE_RGB: Record<Surface, string> = {
+  ink: BG_RGB,
+  panel: PANEL_RGB,
+  cream: '242, 233, 216', // --v-cream
+  purple: '85, 47, 140', // --x-purple-deep
+  mint: '240, 25, 126', // --x-mint
+}
+
+/** Surfaces light enough to need ink text and an ink nav. */
+export const LIGHT_SURFACES: ReadonlySet<Surface> = new Set(['cream', 'mint'])

@@ -9,27 +9,49 @@ await mkdir(out, { recursive: true })
 const browser = await chromium.launch({ channel: 'msedge', headless: true,
   args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] })
 
+// Scroll to the settled middle of a screen's step, read off the sequence's own timeline.
 async function scrollToScreen(page, index) {
   await page.evaluate((i) => {
-    const sequence = document.querySelector('.showcase-sequence')
+    const sequence = document.querySelector('[data-hero-sequence]')
+    const steps = sequence.dataset.steps.split(',').map(Number)
+    const middle = (steps[i] + (steps[i + 1] ?? 1)) / 2
     const top = sequence.getBoundingClientRect().top + scrollY
-    window.scrollTo({ top: top + (sequence.offsetHeight - innerHeight) * ((i + 0.5) / 5), behavior: 'instant' })
+    window.scrollTo({ top: top + (sequence.offsetHeight - innerHeight) * middle, behavior: 'instant' })
   }, index)
+}
+
+// Samples the incoming screen's clip-path through a change: a polygon mid-wipe, or nothing at all.
+function sampleWipe(page) {
+  return page.evaluate(() => new Promise((resolve) => {
+    const clips = new Set()
+    const start = performance.now()
+    function sample(now) {
+      const top = document.querySelector('.app-screenshot > [data-layer="top"]')
+      if (top) clips.add(getComputedStyle(top).clipPath.startsWith('polygon') ? 'polygon' : getComputedStyle(top).clipPath)
+      // long enough for a seek's smooth scroll to reach the step and wipe
+      if (now - start < 1500) requestAnimationFrame(sample)
+      else resolve([...clips])
+    }
+    requestAnimationFrame(sample)
+  }))
 }
 
 async function verifyScreen(page, index, name) {
   await page.waitForFunction((screen) => {
-    return document.querySelector('#showcase img[aria-hidden="false"]')?.getAttribute('src') === `/assets/app/${screen}.jpg`
+    return document.querySelector('.app-screenshot img[aria-hidden="false"]')?.getAttribute('src') === `/assets/app/${screen}.jpg`
   }, screens[index])
-  await page.waitForTimeout(500)
-  const image = page.locator('#showcase img[aria-hidden="false"]')
+  await page.waitForTimeout(700)
+  const image = page.locator('.app-screenshot img[aria-hidden="false"]')
   assert.equal(await image.count(), 1)
   assert.equal(await image.getAttribute('src'), `/assets/app/${screens[index]}.jpg`)
   assert(await image.evaluate((img) => img.complete && img.naturalWidth === 946 && img.naturalHeight === 2049))
-  const slide = page.locator('#showcase [aria-roledescription="slide"]')
+  assert.equal(await image.getAttribute('data-layer'), 'top', 'Active screen is not on top')
+  assert.equal(await image.evaluate((img) => getComputedStyle(img).clipPath), 'none', 'Wipe did not finish uncovered')
+  const slide = page.locator('[aria-roledescription="slide"]')
+  assert.equal(await slide.count(), 1)
   assert((await slide.getAttribute('aria-label')).endsWith(`${index + 1} of 5`))
   assert.equal(await page.getByRole('button', { name: 'Next app screen' }).getAttribute('aria-controls'), await slide.getAttribute('id'))
-  assert.equal(await page.locator('#showcase [role="tablist"], #showcase [role="tab"]').count(), 0, 'Duplicate app tabs remain')
+  assert.equal(await page.locator('[role="tablist"], [role="tab"]').count(), 0, 'Duplicate app tabs remain')
   const imageBounds = await image.boundingBox()
   const bounds = await page.locator('.app-screenshot').boundingBox()
   const scale = imageBounds.width / 946
@@ -58,12 +80,13 @@ try {
     })
     await page.goto(base, { waitUntil: 'networkidle' })
     await page.locator('.preloader').waitFor({ state: 'detached' })
-    const pinned = await page.locator('.showcase-sequence').count() > 0
+    const pinned = await page.locator('[data-showcase-mode="scroll"]').count() > 0
+    assert.equal(pinned, !reduced && height >= 560, `${name}: wrong showcase mode`)
     if (pinned) await scrollToScreen(page, 0)
     else await page.locator('.showcase-image-panel').evaluate((el) => {
       window.scrollTo({ top: el.getBoundingClientRect().top + scrollY - 90, behavior: 'instant' })
     })
-    await page.waitForFunction(() => [...document.querySelectorAll('#showcase img')].every((img) => img.complete && img.naturalWidth > 0))
+    await page.waitForFunction(() => [...document.querySelectorAll('.app-screenshot img')].every((img) => img.complete && img.naturalWidth > 0))
     for (let index = 0; index < screens.length; index++) {
       if (pinned) await scrollToScreen(page, index)
       else if (index > 0) await page.getByRole('button', { name: 'Next app screen' }).click()
@@ -71,13 +94,26 @@ try {
       if (pinned) {
         const image = await page.locator('.app-screenshot').boundingBox()
         assert(image.y > 66 && image.y + image.height < height - 24, 'Pinned image does not fit below the nav')
+        const card = page.locator('.tour-card[aria-hidden="false"]')
+        assert.equal(await card.count(), 1, 'Exactly one card should be current')
+        assert((await card.textContent()).includes(`0${index + 1} / 05`), 'Card does not match the screen')
       }
     }
+    // a screen change wipes in behind the shard, or switches instantly under reduced motion
+    const wiping = sampleWipe(page)
+    await page.getByRole('button', { name: 'Previous app screen' }).click()
+    const clips = await wiping
+    if (reduced) assert.deepEqual(clips, ['none'], `${name}: reduced motion still wipes`)
+    else assert(clips.includes('polygon'), `${name}: no shard wipe`)
+    await verifyScreen(page, 3, `${name}-previous`)
     if (pinned) {
       await scrollToScreen(page, 0)
       await verifyScreen(page, 0, `${name}-reverse`)
       await page.getByRole('button', { name: 'Previous app screen' }).click()
       await verifyScreen(page, 4, `${name}-previous-wrap`)
+    } else {
+      await page.getByRole('button', { name: 'Next app screen' }).click()
+      await verifyScreen(page, 4, `${name}-next`)
     }
     await page.getByRole('button', { name: 'Next app screen' }).click()
     await verifyScreen(page, 0, `${name}-next-wrap`)
@@ -88,7 +124,7 @@ try {
     await page.keyboard.press('Space')
     await verifyScreen(page, 0, `${name}-keyboard-next`)
     assert.deepEqual(errors, [])
-    console.log(`${name}: all five screenshots, navigation, system-bar crops, and assets PASS`)
+    console.log(`${name}: all five screens, shard wipes, navigation, system-bar crops, and assets PASS`)
     await context.close()
   }
 } finally { await browser.close() }

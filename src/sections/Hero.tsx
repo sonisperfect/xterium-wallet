@@ -1,14 +1,14 @@
-import { useRef, useState } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { motion, useMotionValueEvent, useReducedMotion, useScroll, useSpring, useTransform, type MotionValue } from 'framer-motion'
 import { ArrowDown, ArrowDownToLine } from 'lucide-react'
 import BlockchainHeading from '../components/BlockchainHeading'
 import DecorativeBlock from '../components/DecorativeBlock'
 import SplitReveal from '../components/SplitReveal'
-import { AppIntroContent } from './AppShowcase'
-import { StatsContent } from './Stats'
+import { AppStage } from './AppShowcase'
 import { useAnchorScroll } from '../hooks/useAnchorScroll'
 import { useRipple } from '../hooks/useRipple'
 import { useIntro } from '../lib/intro'
+import { HERO_SEQUENCE, STAGE_SPRING, stepMidpoint } from '../lib/sequence'
 
 const EASE = [0.22, 1, 0.36, 1] as const
 
@@ -59,83 +59,76 @@ function HeroSlide({ exit }: { exit?: MotionValue<number> }) {
   )
 }
 
-function PinnedTabs() {
+/** The hero's ink backdrop, split along a jagged seam that parts as the hero scrolls away. */
+function Curtains({ progress }: { progress: MotionValue<number> }) {
+  const left = useTransform(progress, HERO_SEQUENCE.curtains, ['0%', '-56%'])
+  const right = useTransform(progress, HERO_SEQUENCE.curtains, ['0%', '56%'])
+  return (
+    <div className="absolute inset-0" aria-hidden="true">
+      <motion.div className="hero-curtain hero-curtain-left" style={{ x: left }} />
+      <motion.div className="hero-curtain hero-curtain-right" style={{ x: right }} />
+    </div>
+  )
+}
+
+/**
+ * The pinned hero → app sequence. BLOCKCHAIN. lifts out, the ink curtains
+ * part onto the cream stage, and the phone rises to walk through the five
+ * app screens. The heading canvas stays mounted throughout, so scrolling
+ * back never restarts its entrance or its WebGL context.
+ */
+function HeroSequence() {
   const pinRef = useRef<HTMLDivElement>(null)
-  const [active, setActive] = useState(0)
-  const [statsVisible, setStatsVisible] = useState(false)
+  const [phase, setPhase] = useState<'hero' | 'app'>('hero')
+  const [surface, setSurface] = useState<'ink' | 'cream'>('ink')
   const { revealed } = useIntro()
   const { scrollYProgress } = useScroll({ target: pinRef, offset: ['start start', 'end end'] })
-  const progress = useSpring(scrollYProgress, { stiffness: 180, damping: 30, mass: 0.6 })
-  const exit = useTransform(progress, [0.13, 0.33], [0, 1])
-  const heroOpacity = useTransform(progress, [0, 0.19, 0.33], [1, 1, 0])
-  const heroY = useTransform(progress, [0.16, 0.33], [0, -24])
-  const statsOpacity = useTransform(progress, [0.29, 0.4, 0.53, 0.66], [0, 1, 1, 0])
-  const statsY = useTransform(progress, [0.29, 0.4, 0.53, 0.66], [32, 0, 0, -28])
-  const statsScale = useTransform(progress, [0.29, 0.4], [0.985, 1])
-  const appOpacity = useTransform(progress, [0.62, 0.75], [0, 1])
-  const appY = useTransform(progress, [0.62, 0.75], [32, 0])
+  const progress = useSpring(scrollYProgress, STAGE_SPRING)
+  const exit = useTransform(progress, HERO_SEQUENCE.heroExit, [0, 1])
+  const heroOpacity = useTransform(progress, HERO_SEQUENCE.heroFade, [1, 0])
+  const heroY = useTransform(progress, HERO_SEQUENCE.heroFade, [0, -40])
 
   useMotionValueEvent(progress, 'change', (value) => {
-    const next = value < 0.31 ? 0 : value < 0.64 ? 1 : 2
-    setActive((previous) => previous === next ? previous : next)
+    setPhase(value < HERO_SEQUENCE.heroUntil ? 'hero' : 'app')
+    setSurface(value < HERO_SEQUENCE.surfaceSwitch ? 'ink' : 'cream')
   })
 
-  // Pinned layers intersect the viewport even while transparent. Start at a visible
-  // opacity, and reset only once fully hidden so the outgoing numbers never jump.
-  useMotionValueEvent(statsOpacity, 'change', (opacity) => {
-    setStatsVisible((previous) => opacity >= 0.65 ? true : opacity <= 0.01 ? false : previous)
-  })
+  const seek = useCallback((index: number) => {
+    const sequence = pinRef.current
+    if (!sequence) return
+    const top = sequence.getBoundingClientRect().top + window.scrollY
+    const distance = sequence.offsetHeight - window.innerHeight
+    window.scrollTo({ top: top + distance * stepMidpoint(index), behavior: 'smooth' })
+  }, [])
 
-  // Keep the scene mounted so reversing a scroll never restarts its entrance or WebGL context.
   return (
-    <div ref={pinRef} className="snap-section relative" style={{ height: '300svh' }} data-hero-sequence>
-      <div id="top" className="pointer-events-none absolute inset-x-0 top-0 h-px" aria-hidden="true" />
+    <div ref={pinRef} className="hero-sequence" data-hero-sequence data-stage="hero" data-surface={surface}
+      data-steps={HERO_SEQUENCE.steps.join(',')}>
+      <div id="top" className="sequence-anchor" style={{ top: 0 }} aria-hidden="true" />
+      <div id="showcase" className="sequence-anchor" style={{ top: `calc((100% - 100svh) * ${stepMidpoint(0)})` }} aria-hidden="true" />
       <div className="hero-pin sticky top-0 overflow-hidden">
+        <div className="surface-cream absolute inset-0" aria-hidden="true" />
+        <Curtains progress={progress} />
         <motion.div
           style={{ opacity: heroOpacity, y: heroY }}
-          className="absolute inset-0"
-          aria-hidden={active !== 0}
-          inert={active !== 0}
+          className="absolute inset-0 z-[1]"
+          aria-hidden={phase !== 'hero'}
+          inert={phase !== 'hero'}
           data-hero-slide="hero"
         >
           <HeroSlide exit={exit} />
         </motion.div>
-        <motion.div
-          style={{ opacity: statsOpacity, y: statsY, scale: statsScale }}
-          className="absolute inset-0 flex items-center"
-          aria-hidden={active !== 1}
-          inert={active !== 1}
-          data-hero-slide="stats"
-        >
-          <div className="relative mx-auto w-full max-w-7xl px-5 sm:px-8"><StatsContent active={statsVisible && revealed} /></div>
-        </motion.div>
-        <motion.div
-          style={{ opacity: appOpacity, y: appY }}
-          className="absolute inset-0 flex items-center"
-          aria-hidden={active !== 2}
-          inert={active !== 2}
-          data-hero-slide="app"
-        >
-          <div className="relative mx-auto w-full max-w-7xl px-5 sm:px-8"><AppIntroContent /></div>
-        </motion.div>
+        <AppStage progress={progress} active={phase === 'app' && revealed} onSeek={seek} />
       </div>
     </div>
   )
 }
 
-export default function Hero() {
-  const reduced = useReducedMotion()
-  if (reduced) {
-    return (
-      <>
-        <section id="top" className="hero-static snap-section relative">
-          <HeroSlide />
-        </section>
-        <section id="stats" className="snap-section relative flex min-h-[100svh] items-center border-t border-line py-24">
-          <div className="relative mx-auto w-full max-w-7xl px-5 sm:px-8"><StatsContent /></div>
-        </section>
-      </>
-    )
-  }
-  return <PinnedTabs />
+export default function Hero({ staged }: { staged: boolean }) {
+  if (staged) return <HeroSequence />
+  return (
+    <section id="top" className="hero-static surface-ink relative" data-surface="ink">
+      <HeroSlide />
+    </section>
+  )
 }

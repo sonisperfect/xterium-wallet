@@ -35,6 +35,11 @@
     --v-stone-deep: #565d61;
     --v-cream: #f2e9d8;
 
+    /* foreground tokens of the surface underneath (see .surface-*) */
+    --fg: var(--x-ink);
+    --fg-dim: var(--x-dim);
+    --fg-accent: var(--x-mint);
+
     --background: 250 30% 4%;
     --foreground: 240 38% 97%;
     --card: 245 22% 10%;
@@ -256,36 +261,144 @@
   .blockchain-heading[data-ready='true'] .blockchain-heading-fallback { opacity: 0; }
   .hero-cta { margin-top: 28px; }
   .app-intro-heading.voxel-heading::after { content: none; }
-  .app-showcase { scroll-margin-top: 66px; }
-  .showcase-sequence { position: relative; height: 400svh; }
-  .showcase-sticky {
-    position: sticky;
-    top: 0;
+
+  /* ---- surfaces: every full-bleed section and card paints one of these.
+     Each sets the foreground tokens its content reads (--fg, --fg-dim,
+     --fg-accent); every pair passes WCAG AA for the text it carries. A
+     tone-* class sets the tokens without painting, for a layer that sits
+     over a surface it doesn't own. ---- */
+  .surface-ink,
+  .surface-panel { --fg: var(--x-ink); --fg-dim: var(--x-dim); --fg-accent: var(--x-mint); color: var(--fg); }
+  .surface-ink { background-color: var(--x-bg); }
+  .surface-panel { background-color: var(--x-panel); }
+  .surface-cream,
+  .tone-cream { --fg: var(--x-bg); --fg-dim: rgb(8 7 13 / 0.68); --fg-accent: var(--x-mint-deep); color: var(--fg); }
+  .surface-cream { background-color: var(--v-cream); }
+  .surface-purple {
+    background-color: var(--x-purple-deep);
+    --fg: var(--x-ink); --fg-dim: rgb(246 246 251 / 0.74); --fg-accent: #ffb3d6;
+    color: var(--fg);
+  }
+  .surface-violet { background-color: var(--x-purple); --fg: var(--x-ink); --fg-dim: var(--x-ink); --fg-accent: var(--x-ink); color: var(--fg); }
+  .surface-mint { background-color: var(--x-mint); --fg: var(--x-bg); --fg-dim: rgb(8 7 13 / 0.9); --fg-accent: var(--x-bg); color: var(--fg); }
+  .surface-grass { background-color: var(--v-grass); --fg: var(--x-bg); --fg-dim: rgb(8 7 13 / 0.78); --fg-accent: var(--x-bg); color: var(--fg); }
+  .text-fg { color: var(--fg); }
+  .text-fg-dim { color: var(--fg-dim); }
+  .text-fg-accent { color: var(--fg-accent); }
+  .section-marker-rule { background-color: color-mix(in srgb, var(--fg-accent) 45%, transparent); }
+
+  /* ---- pinned hero → app sequence ---- */
+  .hero-sequence { position: relative; height: 600svh; }
+  .sequence-anchor { position: absolute; left: 0; width: 1px; height: 1px; pointer-events: none; }
+  .hero-curtain { position: absolute; inset: 0; background-color: var(--x-bg); will-change: transform; }
+  /* the halves meet along a broken seam; the right one overlaps by 1% so no
+     hairline of the stage shows through at rest */
+  .hero-curtain-left { clip-path: polygon(0 0, 51% 0, 48% 16%, 53% 33%, 47.5% 51%, 52.5% 68%, 48% 85%, 50.5% 100%, 0 100%); }
+  .hero-curtain-right { clip-path: polygon(50% 0, 100% 0, 100% 100%, 49.5% 100%, 47% 85%, 51.5% 68%, 46.5% 51%, 52% 33%, 47% 16%); }
+  .stage-app {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
     display: flex;
-    height: 100svh;
+    align-items: center;
+    justify-content: center;
+    padding: 72px 20px 12px;
+    pointer-events: none;
+  }
+  .stage-app button { pointer-events: auto; }
+  .stage-heading-wrap {
+    position: absolute;
+    inset: 0;
+    z-index: 3;
+    display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 76px 32px 24px;
+    gap: 22px;
+    padding: 0 20px;
   }
-  .showcase-desktop-layout {
+  .stage-heading {
+    max-width: min(92vw, 1100px);
+    text-align: center;
+    font-size: clamp(40px, 7.4vw, 108px);
+    font-weight: 700;
+    line-height: 0.98;
+    letter-spacing: -0.02em;
+  }
+  /* one line at every width — the voxel shadow copy can't follow a wrap */
+  .stage-heading .voxel-heading {
+    display: block;
+    margin-top: 0.12em;
+    font-size: min(0.74em, 5.6vw);
+    line-height: 1.35;
+    letter-spacing: 0;
+    white-space: nowrap;
+  }
+  /* at phone sizes the full extrusion outweighs the glyphs — scale it down with them */
+  @media (max-width: 639px) {
+    .stage-heading .voxel-heading {
+      -webkit-text-stroke-width: 1.5px;
+      filter: drop-shadow(0 8px 4px rgba(2, 12, 9, 0.28));
+      text-shadow: 1px 1px 0 #c5c0b4, 2px 2px 0 #8a9190, 3px 3px 0 var(--v-stone-deep), 4px 4px 0 #292d35, 5px 6px 2px rgba(2, 12, 9, 0.6);
+    }
+    .stage-heading .voxel-heading::after { content: none; }
+  }
+  .stage-app-grid {
+    --screen-h: clamp(220px, calc(100svh - 360px), 600px);
     display: grid;
     width: 100%;
-    max-width: 1200px;
-    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
-    align-items: center;
-    gap: 56px;
+    max-width: 1180px;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: 'phone' 'card' 'controls';
+    justify-items: center;
+    row-gap: 14px;
   }
-  .showcase-desktop-copy { min-height: 210px; display: flex; align-items: center; }
+  .stage-phone { grid-area: phone; will-change: transform; }
+  .stage-phone .app-screenshot { width: auto; height: var(--screen-h); }
+  .tour-card {
+    grid-area: card;
+    align-self: start;
+    width: 100%;
+    max-width: 440px;
+    padding: 16px 18px 18px;
+    border-radius: 4px;
+    box-shadow: 6px 7px 0 rgba(8, 7, 13, 0.2);
+    will-change: transform, opacity;
+  }
+  .tour-card-index { display: block; font-size: 11px; letter-spacing: 0.18em; color: var(--fg-dim); }
+  .tour-card-title { margin-top: 10px; font-size: 19px; font-weight: 600; line-height: 1.12; }
+  .tour-card-desc { margin-top: 8px; font-size: 13px; line-height: 1.5; color: var(--fg-dim); }
+  .stage-controls { grid-area: controls; display: flex; align-items: center; gap: 18px; }
+  .stage-controls .showcase-arrows { margin-top: 0; }
+  @media (min-width: 1024px), (min-width: 700px) and (orientation: landscape) {
+    .hero-sequence { height: 800svh; }
+    .stage-app-grid {
+      --screen-h: clamp(240px, calc(100svh - 210px), 640px);
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      grid-template-areas: 'left phone right' '. controls .';
+      column-gap: clamp(28px, 5vw, 72px);
+      row-gap: 18px;
+    }
+    .tour-card { align-self: center; max-width: 340px; padding: 24px 26px 26px; }
+    .tour-card[data-side='left'] { grid-area: left; justify-self: end; }
+    .tour-card[data-side='right'] { grid-area: right; justify-self: start; }
+    .tour-card-title { margin-top: 12px; font-size: clamp(22px, 1.9vw, 28px); }
+    .tour-card-desc { margin-top: 10px; font-size: 14px; line-height: 1.6; }
+  }
+
+  /* ---- the phone: device frame, cropped screenshot, shard-wipe layers ---- */
+  .app-showcase { scroll-margin-top: 66px; }
   .showcase-copy { max-width: 320px; }
-  .showcase-desktop-navigation { justify-self: center; }
-  .showcase-desktop-index { display: flex; align-items: baseline; justify-content: center; gap: 12px; color: var(--x-faint); }
-  .showcase-desktop-index > span:first-child { font-size: 32px; color: var(--x-dim); }
-  .showcase-desktop-index > span:last-child { font-size: 12px; }
-  .showcase-image-panel { position: relative; display: flex; justify-content: center; min-width: 0; isolation: isolate; }
-  .showcase-image-panel::before {
-    content: ''; position: absolute; inset: -28px 0; z-index: -1; pointer-events: none;
-    background: radial-gradient(ellipse, rgba(122, 72, 224, 0.15), rgba(240, 25, 126, 0.06) 48%, transparent 72%);
+  .showcase-index { display: flex; align-items: baseline; gap: 10px; color: var(--fg-dim); }
+  .showcase-index > span:first-child { font-size: 28px; color: var(--fg); }
+  .showcase-index > span:last-child { font-size: 12px; }
+  .showcase-image-panel { position: relative; display: flex; justify-content: center; min-width: 0; }
+  .phone-frame {
+    position: relative;
+    padding: 9px;
+    border-radius: 36px;
+    background: #08070d;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07), 10px 12px 0 rgba(8, 7, 13, 0.2);
   }
   .app-screenshot {
     position: relative;
@@ -295,11 +408,10 @@
     /* Exclude the 80px status bar and 111px Android navigation strip. */
     aspect-ratio: 946 / 1858;
     overflow: hidden;
-    border-radius: 8px;
+    border-radius: 27px;
     background: #08070d;
-    box-shadow: 0 0 0 1px rgba(240, 25, 126, 0.16), 0 24px 64px rgba(0, 0, 0, 0.4);
+    isolation: isolate;
   }
-  .showcase-sticky .app-screenshot { height: min(680px, calc(100svh - 200px)); width: auto; }
   .app-screenshot > img {
     position: absolute;
     top: calc(-80 / 1858 * 100%);
@@ -308,29 +420,112 @@
     width: 100%;
     height: auto;
   }
-  .showcase-simple { position: relative; max-width: 960px; margin: 0 auto; padding: 80px 20px 96px; }
+  .app-screen-blank { position: absolute; inset: 0; background: var(--v-cream); }
+  /* the outgoing screen stays put as `base`; the incoming one is `top`,
+     clipped to the shard edge with the magenta band running ahead of it */
+  .app-screenshot > [data-layer='base'] { z-index: 1; }
+  .app-screenshot > [data-layer='top'] { z-index: 3; clip-path: var(--wipe-clip, none); }
+  .app-screenshot > [data-layer='off'] { visibility: hidden; }
+  .app-screen-band {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background: var(--x-mint);
+    clip-path: var(--band-clip, polygon(0 0, 0 0, 0 0));
+    pointer-events: none;
+  }
+  .showcase-simple { position: relative; max-width: 960px; margin: 0 auto; padding: 56px 20px 96px; }
   .showcase-simple-layout { display: grid; align-items: center; gap: 32px; }
   .showcase-preview { min-width: 0; }
   .showcase-simple-details { width: 100%; max-width: 390px; margin: 0 auto; }
   .showcase-simple-details .showcase-copy { min-height: 160px; }
-  .showcase-arrows { display: flex; justify-content: center; gap: 10px; margin-top: 16px; }
+  .showcase-arrows { display: flex; justify-content: center; gap: 10px; margin-top: 18px; }
   .showcase-arrows button {
     display: grid;
     width: 40px;
     height: 40px;
     place-items: center;
-    border: 1px solid rgba(255, 255, 255, 0.16);
+    border: 1px solid color-mix(in srgb, var(--fg) 22%, transparent);
     border-radius: 4px;
-    color: var(--x-dim);
+    color: var(--fg-dim);
     transition: color 0.2s ease, border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
   }
-  .showcase-arrows button:hover { color: var(--x-ink); border-color: var(--x-mint); }
+  .showcase-arrows button:hover { color: var(--fg); border-color: var(--fg-accent); }
   @media (min-width: 640px) {
     .showcase-simple { padding-inline: 32px; }
     .showcase-simple-layout { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 48px; }
   }
   @media (prefers-reduced-motion: reduce) {
     .showcase-arrows button { transition: none; }
+  }
+
+  /* ---- stats: cards that rise around a lock-screen phone ---- */
+  .stats-stage { position: relative; height: 220svh; }
+  .stats-sticky {
+    position: sticky;
+    top: 0;
+    display: flex;
+    height: 100svh;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 22px;
+    overflow: hidden;
+    padding: 76px 20px 24px;
+  }
+  .stats-grid {
+    --lock-h: clamp(170px, calc(100svh - 560px), 300px);
+    display: grid;
+    width: 100%;
+    max-width: 1180px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas: 'phone phone' 'a b' 'c d';
+    gap: 12px;
+  }
+  .lock-phone { grid-area: phone; justify-self: center; perspective: 1100px; }
+  .lock-tilt { position: relative; transform-style: preserve-3d; will-change: transform; }
+  .lock-ghost { position: absolute; inset: 0; border: 2px solid var(--v-cream); border-radius: 36px; }
+  .lock-screen {
+    display: flex;
+    height: var(--lock-h);
+    aspect-ratio: 946 / 1858;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 18px;
+    border-radius: 27px;
+    background: radial-gradient(circle at 50% 40%, rgba(240, 25, 126, 0.3), transparent 62%), #08070d;
+  }
+  .lock-dots { display: flex; gap: 8px; }
+  .lock-dots > span { width: 8px; height: 8px; border: 1.5px solid rgba(246, 246, 251, 0.5); border-radius: 9999px; }
+  .lock-dots > span[data-filled='true'] { border-color: var(--x-ink); background: var(--x-ink); }
+  .stat-card { padding: 18px 18px 20px; border-radius: 4px; box-shadow: 6px 7px 0 rgba(4, 3, 8, 0.32); }
+  .stats-stage .stat-card { will-change: transform, opacity; }
+  .stat-card[data-slot='a'] { grid-area: a; }
+  .stat-card[data-slot='b'] { grid-area: b; }
+  .stat-card[data-slot='c'] { grid-area: c; }
+  .stat-card[data-slot='d'] { grid-area: d; }
+  .stat-value { font-size: clamp(36px, 5vw, 80px); font-weight: 700; line-height: 1; letter-spacing: -0.02em; }
+  .stat-label { max-width: 24ch; margin-top: 12px; font-size: 13px; line-height: 1.5; }
+  .stats-flow { padding: 96px 0; }
+  .stats-flow-grid { display: grid; margin-top: 40px; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  @media (min-width: 1024px) {
+    .stats-flow-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; }
+  }
+  @media (min-width: 1024px), (min-width: 700px) and (orientation: landscape) {
+    .stats-stage { height: 250svh; }
+    .stats-grid {
+      --lock-h: clamp(240px, calc(100svh - 270px), 540px);
+      grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+      grid-template-areas: 'a phone b' 'c phone d';
+      column-gap: clamp(28px, 5vw, 72px);
+      row-gap: 20px;
+    }
+    .stats-grid .stat-card { width: 100%; max-width: 320px; align-self: center; }
+    .stats-grid .stat-card:is([data-slot='a'], [data-slot='c']) { justify-self: end; }
+    .stats-grid .stat-card:is([data-slot='b'], [data-slot='d']) { justify-self: start; }
+    .stat-card { padding: 24px 24px 26px; }
+    .stat-label { font-size: 14px; }
   }
   .hero-download.brand-gradient {
     transition: transform 0.25s ease, box-shadow 0.25s ease, filter 0.25s ease;
@@ -369,13 +564,6 @@
     .hero-slide > .relative { max-width: 900px; }
     .hero-cta { margin-top: 8px; }
     .hero-slide > .absolute { bottom: 10px; }
-    [data-hero-slide='stats'] .grid {
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      margin-top: 24px;
-      gap: 16px;
-    }
-    [data-hero-slide='stats'] .font-display { font-size: 48px; }
-    [data-hero-slide='stats'] .text-dim { font-size: 13px; }
   }
   @media (prefers-reduced-motion: no-preference) {
     .hero-scroll-arrow { animation: hero-scroll-cue 2.4s ease-in-out infinite; }
@@ -414,6 +602,40 @@
   .voxel-card:hover {
     transform: translate(-2px, -3px);
     box-shadow: 5px 6px 0 0 rgba(2, 12, 9, 0.45);
+  }
+
+  /* ---- nav: takes its colours from the surface underneath — ink on the
+     light surfaces, light on the dark ones ---- */
+  .site-nav {
+    --nav-fg: var(--x-ink);
+    --nav-cta-bg: var(--x-ink);
+    --nav-cta-fg: var(--x-bg);
+    color: var(--nav-fg);
+    transition: color 0.3s ease;
+  }
+  .site-nav[data-tone='light'] { --nav-fg: var(--x-bg); --nav-cta-bg: var(--x-bg); --nav-cta-fg: var(--x-ink); }
+  .site-nav-glass {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0;
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+    transition: opacity 0.3s ease, background-color 0.3s ease;
+  }
+  .site-nav-glass[data-visible='true'] { opacity: 1; }
+  /* the magenta mark would vanish on the magenta surface, so it goes solid ink there */
+  .site-nav[data-nav-surface='mint'] .nav-logo { filter: brightness(0); }
+  .nav-chip {
+    border: 1px solid color-mix(in srgb, var(--nav-fg) 20%, transparent);
+    color: color-mix(in srgb, var(--nav-fg) 62%, transparent);
+    transition: color 0.3s ease, border-color 0.3s ease;
+  }
+  .nav-cta {
+    background-color: var(--nav-cta-bg);
+    color: var(--nav-cta-fg);
+    transition: transform 0.15s ease-out, box-shadow 0.15s ease-out, background-color 0.3s ease, color 0.3s ease;
   }
 
   /* signature brand gradient — vivid pink to the logo's glossy light-pink
@@ -492,7 +714,11 @@
   @media (prefers-reduced-motion: reduce) {
     .voxel-btn,
     .voxel-card,
-    .voxel-heading-btn {
+    .voxel-heading-btn,
+    .site-nav,
+    .site-nav-glass,
+    .nav-chip,
+    .nav-cta {
       transition: none;
     }
     .voxel-btn:hover,
