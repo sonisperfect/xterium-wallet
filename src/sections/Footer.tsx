@@ -1,4 +1,3 @@
-import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import { Facebook, MessageCircle, Send, Twitter, Youtube } from 'lucide-react'
 import LogoMark from '../components/LogoMark'
@@ -14,21 +13,10 @@ const SOCIALS = [
 ]
 
 export default function Footer() {
-  const [time, setTime] = useState('')
   const onAnchorClick = useAnchorScroll()
 
-  useEffect(() => {
-    const tick = () =>
-      setTime(
-        new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' }),
-      )
-    tick()
-    const id = setInterval(tick, 1000)
-    return () => clearInterval(id)
-  }, [])
-
   return (
-    <footer className="snap-section relative border-t border-line bg-panel">
+    <footer className="snap-section relative border-t border-line bg-panel" data-surface="panel">
       <div className="relative mx-auto max-w-7xl px-5 py-20 sm:px-8">
         <RevealGroup stagger={0.06} className="grid gap-10 md:grid-cols-[1.2fr_1fr_1fr_auto]">
           <Reveal variant="sharp">
@@ -95,9 +83,6 @@ export default function Footer() {
                 </a>
               ))}
             </div>
-            <p className="font-mono2 text-[11px] text-dim">
-              local time <span className="text-mint-soft">{time}</span>
-            </p>
           </Reveal>
         </RevealGroup>
 
