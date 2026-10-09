@@ -1,10 +1,10 @@
-import { useRef, useState } from 'react'
+import { useContext, useEffect, useRef, useState } from 'react'
 import { motion, useMotionValueEvent, useScroll, useSpring, useTransform, type MotionValue } from 'framer-motion'
-import LogoMark from '../components/LogoMark'
 import SectionMarker from '../components/SectionMarker'
 import StatCounter from '../components/StatCounter'
 import { Reveal, RevealGroup } from '../components/Reveal'
 import { STAGE_SPRING, STATS_STAGE } from '../lib/sequence'
+import { StageProgressContext } from '../lib/stages'
 
 const STATS = [
   { value: 12, suffix: '', label: 'word recovery phrase — the only backup you need', surface: 'surface-cream' },
@@ -44,9 +44,10 @@ function StageStatCard({ stat, index, progress, active }: {
 /** A locked phone that starts tilted back like it's lying on a table, then rights itself. */
 function LockPhone({ progress }: { progress: MotionValue<number> }) {
   const range = STATS_STAGE.untilt
-  const rotateX = useTransform(progress, range, [52, 0])
-  const rotateY = useTransform(progress, range, [-24, 0])
-  const rotate = useTransform(progress, range, [-16, 0])
+  const { tilt } = STATS_STAGE
+  const rotateX = useTransform(progress, range, [tilt.x, 0])
+  const rotateY = useTransform(progress, range, [tilt.y, 0])
+  const rotate = useTransform(progress, range, [tilt.z, 0])
   const near = useTransform(progress, range, [-18, 0])
   const far = useTransform(progress, range, [-36, 0])
   const nearY = useTransform(near, (value) => -value)
@@ -60,7 +61,8 @@ function LockPhone({ progress }: { progress: MotionValue<number> }) {
         <motion.div className="lock-ghost" style={{ x: near, y: nearY, opacity: nearOpacity }} />
         <div className="phone-frame">
           <div className="lock-screen">
-            <LogoMark size={56} />
+            {/* the mascot lands here and becomes the lock screen's logo */}
+            <span className="lock-logo" data-mascot-dock="stats" />
             <span className="lock-dots">
               {Array.from({ length: 6 }, (_, index) => <span key={index} data-filled={index < 4} />)}
             </span>
@@ -74,12 +76,15 @@ function LockPhone({ progress }: { progress: MotionValue<number> }) {
 function StatsStage() {
   const ref = useRef<HTMLElement>(null)
   const [counting, setCounting] = useState(0)
+  const shared = useContext(StageProgressContext)
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end end'] })
   const progress = useSpring(scrollYProgress, STAGE_SPRING)
 
+  useEffect(() => shared?.stats.set(progress.get()), [shared, progress])
   // A card counts once it has mostly risen, and resets once it drops away again.
   useMotionValueEvent(progress, 'change', (value) => {
     setCounting(STATS_STAGE.cards.filter((start) => value >= start + STATS_STAGE.countAfter).length)
+    shared?.stats.set(value)
   })
 
   return (

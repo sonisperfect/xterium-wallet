@@ -1,4 +1,4 @@
-import { useId, useLayoutEffect, useState } from 'react'
+import { useId, useLayoutEffect, useState, type ReactNode } from 'react'
 import {
   AnimatePresence, animate, motion, useMotionValue, useMotionValueEvent, useReducedMotion, useTransform,
   type MotionStyle, type MotionValue,
@@ -68,8 +68,9 @@ function AppIntroContent() {
  * The phone and its screen. `active` -1 shows a blank screen. Changing
  * `active` sweeps the new screen in behind a magenta shard; a change that
  * lands mid-wipe settles the screen being wiped in and starts over from it.
+ * `children` sit inside the frame, positioned against it.
  */
-function PhoneScreen({ active, id }: { active: number; id: string }) {
+function PhoneScreen({ active, id, children }: { active: number; id: string; children?: ReactNode }) {
   const reduced = useReducedMotion()
   const [view, setView] = useState({ active, from: active, direction: 1 as 1 | -1 })
   if (view.active !== active) setView({ active, from: view.active, direction: active < view.active ? -1 : 1 })
@@ -100,7 +101,7 @@ function PhoneScreen({ active, id }: { active: number; id: string }) {
   return (
     <div role="group" aria-roledescription="slide" id={id + '-screen'}
       aria-label={`${SCREENS[current].label}, ${current + 1} of ${SCREENS.length}`} className="showcase-image-panel">
-      <div className="phone-frame">
+      <div className="phone-frame" data-blank={active < 0}>
         <motion.div className="app-screenshot" style={{ '--wipe-clip': wipeClip, '--band-clip': bandClip } as unknown as MotionStyle}>
           <div className="app-screen-blank" data-layer={layer(-1)} />
           {SCREENS.map((item, index) => (
@@ -110,6 +111,7 @@ function PhoneScreen({ active, id }: { active: number; id: string }) {
           ))}
           <div className="app-screen-band" aria-hidden="true" />
         </motion.div>
+        {children}
       </div>
     </div>
   )
@@ -208,7 +210,10 @@ export function AppStage({ progress, active, onSeek }: {
   return (
     <div className="stage-app tone-cream" data-hero-slide="app" data-showcase-mode="scroll" aria-hidden={!active} inert={!active}>
       <motion.div className="stage-heading-wrap" style={{ opacity: headingOpacity, scale: headingScale }}>
-        <SectionMarker no="01" label="The app" />
+        {/* the mascot centres itself between the blank screen's top edge and this marker */}
+        <div data-mascot-floor>
+          <SectionMarker no="01" label="The app" />
+        </div>
         <h2 className="stage-heading font-display">
           Your assets,
           <span className="voxel-heading font-pixel" data-voxel-text="clearly in view.">clearly in view.</span>
@@ -216,7 +221,12 @@ export function AppStage({ progress, active, onSeek }: {
       </motion.div>
       <div className="stage-app-grid">
         <motion.div className="stage-phone" style={{ y: phoneY }}>
-          <PhoneScreen active={step} id={id} />
+          <PhoneScreen active={step} id={id}>
+            {/* once the screens start, the mascot settles over the logo in the app's header */}
+            <span className="stage-logo-dock" data-mascot-dock="app-logo" aria-hidden="true" />
+          </PhoneScreen>
+          {/* the mascot perches here, at the top centre of the phone, while its screen is blank */}
+          <span className="stage-mascot-dock" data-mascot-dock="app" aria-hidden="true" />
         </motion.div>
         {SCREENS.map((screen, index) => (
           <TourCard key={screen.id} index={index} progress={progress} current={index === step} />

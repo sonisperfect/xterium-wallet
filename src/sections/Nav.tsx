@@ -31,7 +31,10 @@ export default function Nav() {
 
       <nav className="flex w-full items-center justify-between px-5 pt-4 pb-2.5">
         <a href="#top" onClick={onAnchorClick} className="group flex items-center gap-2.5">
-          <LogoMark size={30} className="nav-logo transition-transform duration-300 group-hover:-rotate-12 group-hover:scale-110" />
+          {/* the mascot grows out of this logo as the page opens */}
+          <span className="inline-flex" data-mascot-dock="nav">
+            <LogoMark size={30} className="nav-logo transition-transform duration-300 group-hover:-rotate-12 group-hover:scale-110" />
+          </span>
           <span className="font-display text-lg font-bold tracking-tight">XTERIUM</span>
           <span className="nav-chip font-pixel hidden rounded-sm px-1.5 py-0.5 text-[9px] uppercase tracking-[0.1em] sm:inline-block">
             v2.0

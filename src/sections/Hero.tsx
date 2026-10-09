@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useContext, useEffect, useRef, useState } from 'react'
 import { motion, useMotionValueEvent, useReducedMotion, useScroll, useSpring, useTransform, type MotionValue } from 'framer-motion'
 import { ArrowDown, ArrowDownToLine } from 'lucide-react'
 import BlockchainHeading from '../components/BlockchainHeading'
@@ -9,17 +9,21 @@ import { useAnchorScroll } from '../hooks/useAnchorScroll'
 import { useRipple } from '../hooks/useRipple'
 import { useIntro } from '../lib/intro'
 import { HERO_SEQUENCE, STAGE_SPRING, stepMidpoint } from '../lib/sequence'
+import { StageProgressContext } from '../lib/stages'
 
 const EASE = [0.22, 1, 0.36, 1] as const
 
-function HeroSlide({ exit }: { exit?: MotionValue<number> }) {
+function HeroSlide({ exit, mascot = false }: { exit?: MotionValue<number>; mascot?: boolean }) {
   const reduced = useReducedMotion()
   const { revealed } = useIntro()
   const onAnchorClick = useAnchorScroll()
   const { onPointerDown, layer } = useRipple()
   return (
-    <div className="hero-slide relative flex h-full w-full flex-col items-center justify-center overflow-hidden">
+    <div className="hero-slide relative flex h-full w-full flex-col items-center justify-center overflow-hidden"
+      data-mascot={mascot || undefined}>
       <div className="hero-texture pointer-events-none absolute inset-0" aria-hidden="true" />
+      {/* where the mascot rises from the bottom edge once scrolling starts */}
+      {mascot && <span className="hero-mascot-dock" data-mascot-dock="hero" aria-hidden="true" />}
       <DecorativeBlock top="20%" left="10%" size={26} color="var(--v-stone)" speed={1.1} spin floatDelay={-1.5} />
       <DecorativeBlock top="68%" left="88%" size={22} color="var(--v-dirt)" speed={0.8} spin floatDelay={-4} />
       <div className="relative z-10 mx-auto flex w-full max-w-[1800px] flex-col items-center px-5 text-center sm:px-8">
@@ -82,15 +86,18 @@ function HeroSequence() {
   const [phase, setPhase] = useState<'hero' | 'app'>('hero')
   const [surface, setSurface] = useState<'ink' | 'cream'>('ink')
   const { revealed } = useIntro()
+  const shared = useContext(StageProgressContext)
   const { scrollYProgress } = useScroll({ target: pinRef, offset: ['start start', 'end end'] })
   const progress = useSpring(scrollYProgress, STAGE_SPRING)
   const exit = useTransform(progress, HERO_SEQUENCE.heroExit, [0, 1])
   const heroOpacity = useTransform(progress, HERO_SEQUENCE.heroFade, [1, 0])
   const heroY = useTransform(progress, HERO_SEQUENCE.heroFade, [0, -40])
 
+  useEffect(() => shared?.hero.set(progress.get()), [shared, progress])
   useMotionValueEvent(progress, 'change', (value) => {
     setPhase(value < HERO_SEQUENCE.heroUntil ? 'hero' : 'app')
     setSurface(value < HERO_SEQUENCE.surfaceSwitch ? 'ink' : 'cream')
+    shared?.hero.set(value)
   })
 
   const seek = useCallback((index: number) => {
@@ -116,7 +123,7 @@ function HeroSequence() {
           inert={phase !== 'hero'}
           data-hero-slide="hero"
         >
-          <HeroSlide exit={exit} />
+          <HeroSlide exit={exit} mascot />
         </motion.div>
         <AppStage progress={progress} active={phase === 'app' && revealed} onSeek={seek} />
       </div>
