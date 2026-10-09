@@ -35,6 +35,25 @@ async function check(name, viewport, { reduced = false, timeout = false, noWebGL
   const page = await context.newPage()
   const errors = []
   page.on('pageerror', (error) => errors.push(error.message))
+  // every frame the preloader is up: where its logo sits against the nav's, and whether the nav's shows
+  await page.addInitScript(() => {
+    window.handoff = []
+    const sample = () => {
+      const logo = document.querySelector('.preloader-mark img')?.getBoundingClientRect()
+      const nav = document.querySelector('[data-mascot-dock="nav"]')
+      if (logo && nav) {
+        const target = nav.getBoundingClientRect()
+        window.handoff.push({
+          dx: logo.left + logo.width / 2 - target.left - target.width / 2,
+          dy: logo.top + logo.height / 2 - target.top - target.height / 2,
+          ratio: logo.width / target.width,
+          navHidden: getComputedStyle(nav).visibility === 'hidden',
+        })
+      }
+      requestAnimationFrame(sample)
+    }
+    requestAnimationFrame(sample)
+  })
   let releaseHero
   const heroGate = new Promise((resolve) => { releaseHero = resolve })
   if (!noWebGL && !failedLogo) {
@@ -86,6 +105,14 @@ async function check(name, viewport, { reduced = false, timeout = false, noWebGL
     assert.equal(await page.evaluate(() => document.documentElement.style.overflow), '')
     assert.equal(await page.locator('.preloader-page').evaluate((el) => el.inert), false)
     assert.equal(await page.locator('.preloader-mark canvas').count(), 0, 'Preloader canvas was not removed')
+    // the preloader's logo flies into the nav's and becomes it: one logo on screen throughout
+    const handoff = await page.evaluate(() => window.handoff)
+    assert(handoff.length && handoff.every((frame) => frame.navHidden), `${name}: nav logo showed beside the preloader's`)
+    const landed = handoff.at(-1)
+    if (!reduced) assert(Math.hypot(landed.dx, landed.dy) < 3 && Math.abs(landed.ratio - 1) < 0.08,
+      `${name}: logo did not land in the nav: ${JSON.stringify(landed)}`)
+    assert.equal(await page.locator('[data-mascot-dock="nav"]').evaluate((el) => getComputedStyle(el).visibility), 'visible',
+      `${name}: nav logo stayed hidden`)
     if (timeout) {
       assert.equal(await page.locator('.blockchain-heading').getAttribute('data-ready'), 'false')
       releaseHero()
@@ -95,6 +122,15 @@ async function check(name, viewport, { reduced = false, timeout = false, noWebGL
     assert.equal(await page.locator('.hero-download').evaluate((el) => getComputedStyle(el.parentElement).opacity), '1')
     if (noWebGL) assert.equal(await page.locator('.blockchain-heading').getAttribute('data-ready'), 'false')
     else await page.waitForSelector('.blockchain-heading[data-ready="true"]')
+    if (name === 'desktop') {
+      // a refresh starts back at the top, not where the visit left off
+      await page.evaluate(() => window.scrollTo({ top: 4200, behavior: 'instant' }))
+      await page.waitForTimeout(400)
+      await page.reload({ waitUntil: 'networkidle' })
+      await page.locator('.preloader').waitFor({ state: 'detached', timeout: 10000 })
+      await page.waitForTimeout(600)
+      assert.equal(await page.evaluate(() => window.scrollY), 0, 'Refresh restored the old scroll position')
+    }
     assert.deepEqual(errors, [], `${name}: browser errors`)
     console.log(`${name}: PASS`)
   } finally { releaseHero(); await context.close() }

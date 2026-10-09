@@ -35,6 +35,9 @@
     --v-stone-deep: #565d61;
     --v-cream: #f2e9d8;
 
+    /* the phone mockup's bezel, shared by the frame and the docks laid over it */
+    --phone-bezel: 9px;
+
     /* foreground tokens of the surface underneath (see .surface-*) */
     --fg: var(--x-ink);
     --fg-dim: var(--x-dim);
@@ -143,15 +146,17 @@
     place-items: center;
     overflow: hidden;
   }
-  .preloader-shutter {
-    position: absolute;
-    inset-inline: 0;
-    height: calc(50% + 1px);
-    background: var(--x-bg);
-    will-change: transform;
-  }
-  .preloader-shutter-top { top: 0; }
-  .preloader-shutter-bottom { bottom: 0; }
+  /* the cream brand screen: a whole sheet while loading, three shards when it
+     breaks. The seams meet under the logo — the same broken edge as the hero's
+     curtains and the phone's wipes. */
+  .preloader-base,
+  .preloader-shard { position: absolute; inset: 0; background: var(--v-cream); }
+  .preloader-shard { will-change: transform; }
+  .preloader-shard-a { clip-path: polygon(0 0, 58% 0, 52% 18%, 46% 40%, 24% 56%, 0 68%); }
+  .preloader-shard-b { clip-path: polygon(58% 0, 100% 0, 100% 74%, 72% 54%, 46% 40%, 52% 18%); }
+  .preloader-shard-c { clip-path: polygon(0 68%, 24% 56%, 46% 40%, 72% 54%, 100% 74%, 100% 100%, 0 100%); }
+  /* the nav's logo waits for the preloader's to fly into its place */
+  .preloader ~ .preloader-page [data-mascot-dock='nav'] { visibility: hidden; }
   .preloader-content {
     position: relative;
     display: flex;
@@ -184,22 +189,28 @@
     font-weight: 700;
     line-height: 1.1;
     letter-spacing: 0;
-    color: var(--x-ink);
+    color: var(--x-bg);
   }
-  .preloader-ecosystem { margin-top: 12px; font-size: 10px; letter-spacing: 0; color: var(--x-dim); }
-  .preloader-progress { display: flex; gap: 6px; width: 144px; height: 3px; margin-top: 32px; }
-  .preloader-progress-track { position: relative; flex: 1; overflow: hidden; background: #302332; }
-  .preloader-progress-track > span {
+  .preloader-copy { display: flex; flex-direction: column; align-items: center; }
+  .preloader-ecosystem { margin-top: 12px; font-size: 10px; letter-spacing: 0.24em; color: rgb(8 7 13 / 0.62); }
+  /* one hairline that fills a third per signal */
+  .preloader-progress {
+    position: relative;
+    width: 144px;
+    height: 2px;
+    margin-top: 30px;
+    overflow: hidden;
+    border-radius: 2px;
+    background: rgb(8 7 13 / 0.12);
+  }
+  .preloader-progress > span {
     position: absolute;
     inset: 0;
     background: var(--x-mint);
-    transform: scaleX(0);
+    transform: scaleX(var(--loaded, 0));
     transform-origin: left;
-    transition: transform 0.35s ease, background-color 0.25s ease;
+    transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1);
   }
-  .preloader-progress-track[data-loaded='true'] > span { transform: scaleX(1); }
-  .preloader[data-ready='true'] .preloader-progress-track > span { background: #ff88bc; }
-  .preloader-status { height: 16px; margin-top: 12px; font-size: 10px; letter-spacing: 0; color: var(--x-dim); }
   @media (max-width: 639px) {
     .preloader-mark { width: 208px; height: 188px; }
     .preloader-mark > img { width: 124px; height: 124px; }
@@ -214,7 +225,7 @@
   @media (prefers-reduced-motion: reduce) {
     .preloader-mark > img,
     .preloader-mark-scene,
-    .preloader-progress-track > span { transition: none; }
+    .preloader-progress > span { transition: none; }
   }
 
   .hero-pin,
@@ -320,28 +331,39 @@
   .stage-heading {
     max-width: min(92vw, 1100px);
     text-align: center;
-    font-size: clamp(40px, 7.4vw, 108px);
+    font-size: clamp(34px, 6vw, 88px);
     font-weight: 700;
     line-height: 0.98;
     letter-spacing: -0.02em;
   }
-  /* one line at every width — the voxel shadow copy can't follow a wrap */
+  /* the voxel line, recast for the cream stage: a solid magenta face on a hard,
+     stepped extrusion (deep magenta, then ink) — crisp pixel blocks, no blur.
+     One line at every width. */
   .stage-heading .voxel-heading {
     display: block;
-    margin-top: 0.12em;
-    font-size: min(0.74em, 5.6vw);
+    margin-top: 0.16em;
+    /* sized to the viewport, not the line above: about 12em wide, so 6.4vw keeps it on one line */
+    font-size: min(6.4vw, 92px);
     line-height: 1.35;
     letter-spacing: 0;
     white-space: nowrap;
+    color: var(--x-mint);
+    background: none;
+    -webkit-text-stroke: 0;
+    filter: none;
+    text-shadow:
+      1px 1px 0 var(--x-mint-deep), 2px 2px 0 var(--x-mint-deep), 3px 3px 0 var(--x-mint-deep),
+      4px 4px 0 #8c0f4b, 5px 5px 0 #8c0f4b,
+      6px 6px 0 var(--x-bg), 7px 7px 0 var(--x-bg), 8px 8px 0 var(--x-bg);
   }
-  /* at phone sizes the full extrusion outweighs the glyphs — scale it down with them */
+  .stage-heading .voxel-heading::after { content: none; }
+  /* at phone sizes the extrusion steps down with the glyphs */
   @media (max-width: 639px) {
     .stage-heading .voxel-heading {
-      -webkit-text-stroke-width: 1.5px;
-      filter: drop-shadow(0 8px 4px rgba(2, 12, 9, 0.28));
-      text-shadow: 1px 1px 0 #c5c0b4, 2px 2px 0 #8a9190, 3px 3px 0 var(--v-stone-deep), 4px 4px 0 #292d35, 5px 6px 2px rgba(2, 12, 9, 0.6);
+      text-shadow:
+        1px 1px 0 var(--x-mint-deep), 2px 2px 0 var(--x-mint-deep),
+        3px 3px 0 #8c0f4b, 4px 4px 0 var(--x-bg), 5px 5px 0 var(--x-bg);
     }
-    .stage-heading .voxel-heading::after { content: none; }
   }
   .stage-app-grid {
     --screen-h: clamp(220px, calc(100svh - 360px), 600px);
@@ -353,7 +375,7 @@
     justify-items: center;
     row-gap: 14px;
   }
-  .stage-phone { grid-area: phone; will-change: transform; }
+  .stage-phone { position: relative; grid-area: phone; will-change: transform; }
   .stage-phone .app-screenshot { width: auto; height: var(--screen-h); }
   .tour-card {
     grid-area: card;
@@ -386,6 +408,178 @@
     .tour-card-desc { margin-top: 10px; font-size: 14px; line-height: 1.6; }
   }
 
+  /* ---- /policy: every policy on one page, with sticky tabs to each ---- */
+  .policy-page { max-width: 760px; margin: 0 auto; padding: 48px 20px 96px; }
+  .policy-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--fg-dim);
+    transition: color 0.2s ease;
+  }
+  .policy-back:hover { color: var(--fg-accent); }
+  .policy-header { margin-top: 36px; }
+  .policy-title { font-size: clamp(40px, 9vw, 64px); font-weight: 700; line-height: 1; letter-spacing: -0.03em; }
+  .policy-title-accent {
+    background: linear-gradient(120deg, var(--x-mint) 10%, var(--x-mint-soft) 45%, var(--x-purple) 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .policy-updated { margin-top: 14px; font-size: 14px; color: var(--fg-dim); }
+  .policy-tabs {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    margin: 28px -20px 0;
+    padding: 14px 20px;
+    background: rgb(8 7 13 / 0.88);
+    -webkit-backdrop-filter: blur(12px);
+    backdrop-filter: blur(12px);
+  }
+  .policy-tabs ul { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; }
+  .policy-tabs ul::-webkit-scrollbar { display: none; }
+  /* on phones the row runs off the edge; fade it there to show it scrolls,
+     until it's scrolled to its end */
+  @media (max-width: 639px) {
+    .policy-tabs ul:not([data-end='true']) {
+      -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent);
+      mask-image: linear-gradient(90deg, #000 calc(100% - 40px), transparent);
+    }
+  }
+  .policy-tabs a {
+    display: block;
+    padding: 7px 14px;
+    border: 1px solid color-mix(in srgb, var(--fg) 18%, transparent);
+    border-radius: 9999px;
+    font-size: 13px;
+    white-space: nowrap;
+    color: var(--fg-dim);
+    transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+  }
+  .policy-tabs a:hover { color: var(--fg); border-color: color-mix(in srgb, var(--fg) 40%, transparent); }
+  .policy-tabs a[aria-current] { color: var(--fg); border-color: var(--x-mint); background: rgb(240 25 126 / 0.14); }
+  /* clear of the sticky tabs when landed on by its #anchor */
+  .policy-section { padding-top: 48px; scroll-margin-top: 64px; }
+  .policy-section + .policy-section { margin-top: 48px; border-top: 1px solid var(--x-line); }
+  .policy-section h2 { font-size: clamp(26px, 5vw, 32px); font-weight: 700; line-height: 1.15; letter-spacing: -0.02em; }
+  .policy-prose { margin-top: 18px; font-size: 15px; line-height: 1.75; color: var(--fg-dim); }
+  .policy-prose > * + * { margin-top: 14px; }
+  .policy-prose h3 {
+    margin-top: 32px;
+    font-family: 'Space Grotesk', 'Inter', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: var(--fg);
+  }
+  .policy-prose strong { font-weight: 600; color: var(--fg); }
+  .policy-prose a {
+    color: var(--x-mint-soft);
+    text-decoration: underline;
+    text-decoration-color: rgb(255 61 147 / 0.4);
+    text-underline-offset: 3px;
+    transition: text-decoration-color 0.2s ease;
+  }
+  .policy-prose a:hover { text-decoration-color: currentColor; }
+  .policy-prose ul { padding-left: 20px; list-style: disc; }
+  .policy-prose li + li { margin-top: 6px; }
+  .policy-prose li::marker { color: var(--x-mint); }
+  .policy-prose .policy-meta { font-size: 13px; color: var(--x-faint); }
+  .policy-table-wrap { overflow-x: auto; border: 1px solid var(--x-line); border-radius: 4px; }
+  .policy-prose table { width: 100%; min-width: 520px; border-collapse: collapse; font-size: 14px; line-height: 1.55; }
+  .policy-prose th,
+  .policy-prose td { padding: 10px 14px; text-align: left; vertical-align: top; border-bottom: 1px solid rgb(239 250 246 / 0.08); }
+  .policy-prose th { font-weight: 600; color: var(--fg); background: var(--x-panel); }
+  .policy-prose tr:last-child td { border-bottom: 0; }
+  /* phones: the table wraps to fit rather than hiding a column off to the side */
+  @media (max-width: 639px) {
+    .policy-prose table { min-width: 0; font-size: 13px; }
+    .policy-prose th,
+    .policy-prose td { padding: 9px 10px; }
+  }
+  @media (min-width: 640px) {
+    .policy-page { padding: 64px 32px 120px; }
+    .policy-tabs { margin-inline: -32px; padding-inline: 32px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .policy-back,
+    .policy-tabs a,
+    .policy-prose a { transition: none; }
+  }
+
+  /* ---- the mascot: the Xterium mark, grown out of the nav logo, rising from
+     the hero's bottom edge, then travelling between docks — boxes it reads
+     for its position and size. Below the nav (z 50), so it emerges from
+     behind the logo. ---- */
+  .mascot-layer { position: fixed; inset: 0; z-index: 30; overflow: hidden; pointer-events: none; }
+  .mascot {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 0;
+    will-change: transform;
+  }
+  /* tucked away behind the nav's logo at the top of the page */
+  .mascot[data-parked='true'] { visibility: hidden; }
+  .mascot-turn,
+  .mascot-scene { position: absolute; inset: 0; }
+  /* sized to match the 3D mark within its square */
+  .mascot-turn img { display: block; width: 84%; height: 84%; margin: 8%; object-fit: contain; }
+  .mascot-scene { opacity: 0; transition: opacity 0.25s ease; }
+  .mascot-scene canvas { display: block; width: 100%; height: 100%; }
+  .mascot[data-ready='true'] .mascot-scene { opacity: 1; }
+  .mascot[data-ready='true'] .mascot-turn { opacity: 0; }
+  @media (prefers-reduced-motion: no-preference) {
+    .mascot:not([data-calm='true']) .mascot-turn img { animation: mascot-bob 5s ease-in-out infinite; }
+  }
+  @keyframes mascot-bob {
+    0%, 100% { transform: translateY(0) rotate(-2deg); }
+    50% { transform: translateY(-3%) rotate(2deg); }
+  }
+  .hero-mascot-dock {
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    width: clamp(260px, 56svh, 620px);
+    aspect-ratio: 1;
+    transform: translate(-50%, 50%);
+    pointer-events: none;
+  }
+  /* the hero copy lifts to leave the bottom fifth of the screen for the mark */
+  .hero-slide[data-mascot] { padding-bottom: 20svh; }
+  /* on the blank screen: its box starts at the screen's top edge, and the
+     mascot centres itself between there and the heading's marker below */
+  .stage-mascot-dock {
+    position: absolute;
+    top: var(--phone-bezel);
+    left: 50%;
+    width: 84px;
+    aspect-ratio: 1;
+    transform: translateX(-50%);
+    pointer-events: none;
+  }
+  @media (min-width: 1024px), (min-width: 700px) and (orientation: landscape) {
+    .stage-mascot-dock { width: 128px; }
+  }
+  /* over the Xterium logo in the app's header, inside the bezel. It sits in the
+     same spot in all five screenshots: centred at (84.5, 134.5) and 65px
+     across in the 946×2049 originals, whose top 80px the crop removes. */
+  .stage-logo-dock {
+    position: absolute;
+    top: calc(var(--phone-bezel) + (100% - 2 * var(--phone-bezel)) * 54.5 / 1858);
+    left: calc(var(--phone-bezel) + (100% - 2 * var(--phone-bezel)) * 84.5 / 946);
+    width: calc((100% - 2 * var(--phone-bezel)) * 65 / 946);
+    aspect-ratio: 1;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+  }
+  .lock-logo { width: calc(var(--lock-h) * 0.22); aspect-ratio: 1; }
+
   /* ---- the phone: device frame, cropped screenshot, shard-wipe layers ---- */
   .app-showcase { scroll-margin-top: 66px; }
   .showcase-copy { max-width: 320px; }
@@ -395,10 +589,23 @@
   .showcase-image-panel { position: relative; display: flex; justify-content: center; min-width: 0; }
   .phone-frame {
     position: relative;
-    padding: 9px;
+    padding: var(--phone-bezel);
     border-radius: 36px;
-    background: #08070d;
+    background-color: #08070d;
     box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.07), 10px 12px 0 rgba(8, 7, 13, 0.2);
+    transition: background-color 0.4s ease, box-shadow 0.4s ease;
+  }
+  /* while its screen is blank — the heading's moment — the phone is only an
+     outline, so the heading reads clean across it; the body fills in as the
+     first screen wipes in */
+  .phone-frame[data-blank='true'] {
+    background-color: transparent;
+    box-shadow: inset 0 0 0 2px rgb(8 7 13 / 0.22), 0 0 0 rgb(8 7 13 / 0);
+  }
+  /* the screen's dark backing would ghost through its anti-aliased corners */
+  .phone-frame[data-blank='true'] .app-screenshot { background: var(--v-cream); }
+  @media (prefers-reduced-motion: reduce) {
+    .phone-frame { transition: none; }
   }
   .app-screenshot {
     position: relative;

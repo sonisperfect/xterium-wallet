@@ -76,6 +76,13 @@ try {
       // fully formed cards sit inside the viewport, below the nav
       const bounds = await page.locator('#stats .stat-card').evaluateAll((cards) => cards.map((card) => card.getBoundingClientRect().toJSON()))
       assert(bounds.every((box) => box.top >= 60 && box.bottom <= height && box.left >= 0 && box.right <= width), `${name}: a card does not fit`)
+      // the mascot has landed in the lock screen as its logo
+      const landed = await page.evaluate(() => {
+        const mascot = document.querySelector('.mascot').getBoundingClientRect()
+        const dock = document.querySelector('[data-mascot-dock="stats"]').getBoundingClientRect()
+        return Math.hypot(mascot.left + mascot.width / 2 - dock.left - dock.width / 2, mascot.top + mascot.height / 2 - dock.top - dock.height / 2)
+      })
+      assert(landed < 4, `${name}: mascot did not land in the lock screen (${landed.toFixed(1)}px off)`)
       await scrollToStage(page, 0.2)
       await page.waitForTimeout(900)
       assert.deepEqual(await values(page), initialValues, `${name}: counters did not reset while hidden`)

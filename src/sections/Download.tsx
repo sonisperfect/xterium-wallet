@@ -1,4 +1,4 @@
-import { Apple, Chrome, Play } from 'lucide-react'
+import { AppleIcon, ChromeWebStoreIcon, GooglePlayIcon } from '../components/StoreIcons'
 import SectionMarker from '../components/SectionMarker'
 import { Reveal, RevealGroup } from '../components/Reveal'
 import SplitReveal from '../components/SplitReveal'
@@ -13,19 +13,19 @@ const SURE = [
 
 const STORES = [
   {
-    icon: Chrome,
+    icon: ChromeWebStoreIcon,
     top: 'Available in the',
     name: 'Chrome Web Store',
     href: 'https://chromewebstore.google.com/detail/xterium/klfhdmiebenifpdmdmkjicdohjilabdg',
   },
   {
-    icon: Play,
+    icon: GooglePlayIcon,
     top: 'Get it on',
     name: 'Google Play',
     href: 'https://play.google.com/store/apps/details?id=net.xode.xtr',
   },
   {
-    icon: Apple,
+    icon: AppleIcon,
     top: 'Download on the',
     name: 'App Store',
     href: 'https://apps.apple.com/ph/app/xterium-xode-wallet/id6809356501',
@@ -43,7 +43,7 @@ function StoreLink({ s }: { s: (typeof STORES)[number] }) {
       onPointerDown={onPointerDown}
       className="voxel-card surface-ink relative flex items-center gap-3.5 overflow-hidden px-7 py-4"
     >
-      <s.icon className="h-5 w-5 text-primary" strokeWidth={1.5} />
+      <s.icon className="h-6 w-auto shrink-0 text-white" />
       <span className="relative text-left">
         <span className="font-mono2 block text-[9px] uppercase tracking-[0.18em] text-fg-dim">{s.top}</span>
         <span className="font-display block text-[15px] font-semibold leading-tight">{s.name}</span>

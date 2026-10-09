@@ -58,6 +58,17 @@ async function checkViewport(name, width, height, reduced = false) {
       requestAnimationFrame(sampleEntrance)
     }
     requestAnimationFrame(sampleEntrance)
+    // the mascot's first frames out of hiding
+    window.mascotFrames = []
+    function sampleMascot() {
+      const body = document.querySelector('.mascot')
+      if (body?.dataset.parked === 'false') {
+        const bounds = body.getBoundingClientRect()
+        window.mascotFrames.push({ x: bounds.left + bounds.width / 2, y: bounds.top + bounds.height / 2, size: bounds.width })
+      }
+      if (window.mascotFrames.length < 240) requestAnimationFrame(sampleMascot)
+    }
+    requestAnimationFrame(sampleMascot)
   })
   const errors = []
   page.on('pageerror', (error) => errors.push(error.message))
@@ -104,6 +115,60 @@ async function checkViewport(name, width, height, reduced = false) {
         }).slice(0, 15).map((el) => ({ tag: el.tagName, classes: el.className, width: el.getBoundingClientRect().width }))) }))
     }
     assert(layout.scrollWidth <= layout.width + 1, `${name}: page overflow`)
+
+    // the mascot: only in the pinned layout, and only once the page scrolls from the top;
+    // live 3D with a mouse and room for it, the logo image elsewhere
+    const pinnedLayout = !reduced && height >= 560
+    assert.equal(await page.locator('.mascot').count(), pinnedLayout ? 1 : 0, `${name}: mascot in the wrong layout`)
+    assert.equal(await page.locator('.hero-mascot-dock').count(), pinnedLayout ? 1 : 0, `${name}: hero dock in the wrong layout`)
+    if (pinnedLayout) {
+      const state = () => page.evaluate(() => {
+        const body = document.querySelector('.mascot')
+        const bounds = body.getBoundingClientRect()
+        const logo = document.querySelector('[data-mascot-dock="nav"]').getBoundingClientRect()
+        // centred on the hero, which a reserved scrollbar gutter can make narrower than the viewport
+        const hero = document.querySelector('.hero-slide').getBoundingClientRect()
+        return {
+          parked: body.dataset.parked, visibility: getComputedStyle(body).visibility,
+          x: bounds.left + bounds.width / 2, y: bounds.top + bounds.height / 2, size: bounds.width,
+          logo: { x: logo.left + logo.width / 2, y: logo.top + logo.height / 2, size: logo.width },
+          heroX: hero.left + hero.width / 2,
+        }
+      })
+      const inLogo = (s) => s.parked === 'true' && s.visibility === 'hidden'
+        && Math.hypot(s.x - s.logo.x, s.y - s.logo.y) < 2 && Math.abs(s.size / s.logo.size - 1.2) < 0.05
+      // above the fold at rest it's tucked away behind the nav's logo, never shown
+      const resting = await state()
+      assert(inLogo(resting), `${name}: mascot showing before any scroll: ${JSON.stringify(resting)}`)
+      assert.equal(await page.evaluate(() => window.mascotFrames.length), 0, `${name}: mascot showed before scrolling`)
+
+      // scrolling from the top brings it out of the logo, down into the hero
+      await page.evaluate(() => window.scrollTo({ top: 12, behavior: 'instant' }))
+      await page.waitForTimeout(1600)
+      // contexts under 640px emulate touch; the wider ones have a fine pointer
+      const live = width >= 1024
+      if (live) await page.waitForSelector('.mascot[data-ready="true"]', { timeout: 10000 })
+      assert.equal(await page.locator('.mascot canvas').count(), live ? 1 : 0, `${name}: wrong mascot renderer`)
+      const mascot = await state()
+      const peak = mascot.y - mascot.size * 0.42
+      assert(mascot.parked === 'false' && mascot.visibility === 'visible', `${name}: mascot did not come out`)
+      assert(Math.abs(mascot.x - mascot.heroX) < 2, `${name}: mascot not centred`)
+      assert(mascot.size >= 240 && mascot.y >= height - 1 && peak < height - 120, `${name}: mascot does not rise from the bottom edge`)
+      assert(peak > layout.buttonBottom + 12, `${name}: mascot crowds the CTA`)
+      // its first frame out is near the start of the logo → hero path — the ease is quick off the mark,
+      // and a slow first frame under SwiftShader can land a fifth of the way along
+      const frames = await page.evaluate(() => window.mascotFrames)
+      const along = frames.length && Math.hypot(frames[0].x - resting.logo.x, frames[0].y - resting.logo.y)
+        / Math.hypot(mascot.x - resting.logo.x, mascot.y - resting.logo.y)
+      assert(frames.length && along < 0.35 && frames[0].size < mascot.size * 0.4,
+        `${name}: mascot did not grow out of the nav logo: ${JSON.stringify({ first: frames[0], logo: resting.logo, along })}`)
+      assert(frames.some((frame) => frame.size > resting.logo.size * 3 && frame.size < mascot.size * 0.9), `${name}: mascot did not travel from the logo`)
+
+      // back at the top it tucks into the logo again
+      await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
+      await page.waitForTimeout(1200)
+      assert(inLogo(await state()), `${name}: mascot did not tuck back into the logo`)
+    }
 
     if (name === 'desktop') {
       await page.waitForTimeout(350)
@@ -181,6 +246,31 @@ async function checkViewport(name, width, height, reduced = false) {
             `${name}: ${key} does not fit at ${progress}: ${JSON.stringify(bounds)}`)
         }
         assert(progress < 0.37 || fit.card, `${name}: no card at ${progress}`)
+        // on the phone: on the blank screen, centred between its top edge and the heading's
+        // marker (at most 80% of that gap); then over the logo in the app's header — centred
+        // at (84.5, 134.5) and 65px across in the 946×2049 screenshots, whose top 80px are
+        // cropped — a size up (1.5×) from it
+        const perch = await page.evaluate((blank) => {
+          const mascot = document.querySelector('.mascot').getBoundingClientRect()
+          const stage = document.querySelector('[data-hero-slide="app"]')
+          const frame = stage.querySelector('.phone-frame').getBoundingClientRect()
+          const shot = stage.querySelector('.app-screenshot').getBoundingClientRect()
+          const marker = stage.querySelector('[data-mascot-floor]').getBoundingClientRect()
+          const screenTop = shot.top
+          const gap = marker.top - screenTop
+          const target = blank
+            ? { x: frame.left + frame.width / 2, y: screenTop + gap / 2,
+              size: Math.min(stage.querySelector('[data-mascot-dock="app"]').offsetWidth, gap * 0.8) }
+            : { x: shot.left + shot.width * 84.5 / 946, y: shot.top + shot.height * 54.5 / 1858, size: shot.width * 65 / 946 * 1.2 * 1.5 }
+          return {
+            dx: mascot.left + mascot.width / 2 - target.x, dy: mascot.top + mascot.height / 2 - target.y,
+            size: mascot.width, ratio: mascot.width / target.size,
+            inside: mascot.top > screenTop && mascot.bottom < marker.top,
+          }
+        }, progress < 0.34)
+        assert(perch.size <= 130 && Math.abs(perch.dx) < 2 && Math.abs(perch.dy) < 2 && Math.abs(perch.ratio - 1) < 0.05
+          && (progress >= 0.34 || perch.inside),
+          `${name}: mascot is not in place on the phone at ${progress}: ${JSON.stringify(perch)}`)
         assert(fit.headingOverflow <= 1 && fit.headingLines === 1, `${name}: stage heading overflows or wraps`)
         await page.screenshot({ path: `${out}/hero-${name}-stage-${progress}.png` })
       }
@@ -200,6 +290,56 @@ try {
     ['breakpoint', 640, 800], ['mobile', 390, 844], ['small', 320, 740],
     ['landscape', 844, 390], ['reduced', 1440, 900, true], ['mobile-reduced', 390, 844, true],
   ].filter(([name]) => !process.env.HERO_CASES || process.env.HERO_CASES.split(',').includes(name))) await checkViewport(name, width, height, reduced)
+
+  // The 3D mascot's canvas reallocates as it grows and shrinks, which wipes it; it must be
+  // redrawn before the browser paints, or it blinks out for a frame each time.
+  if (!process.env.HERO_CASES || process.env.HERO_CASES.split(',').includes('desktop')) {
+    const blinkContext = await browser.newContext({ viewport: { width: 1440, height: 900 } })
+    const blinkPage = await blinkContext.newPage()
+    await blinkPage.addInitScript(() => {
+      // keep the drawing buffer readable so the check can look at it
+      const getContext = HTMLCanvasElement.prototype.getContext
+      HTMLCanvasElement.prototype.getContext = function (type, options) {
+        return getContext.call(this, type, type.startsWith('webgl') ? { ...options, preserveDrawingBuffer: true } : options)
+      }
+      window.mascotResizes = 0
+      window.mascotBlinks = []
+      const width = Object.getOwnPropertyDescriptor(HTMLCanvasElement.prototype, 'width')
+      Object.defineProperty(HTMLCanvasElement.prototype, 'width', {
+        get() { return width.get.call(this) },
+        set(value) {
+          const watch = this.closest?.('.mascot') && value !== width.get.call(this)
+          width.set.call(this, value)
+          if (!watch) return
+          window.mascotResizes++
+          const canvas = this
+          // once the resize handler has finished, still ahead of this frame's paint
+          queueMicrotask(() => {
+            const body = canvas.closest('.mascot')
+            if (body.dataset.ready !== 'true') return // not drawn yet: the logo image stands in
+            const probe = document.createElement('canvas').getContext('2d')
+            probe.canvas.width = probe.canvas.height = 48
+            probe.drawImage(canvas, 0, 0, 48, 48)
+            if (!probe.getImageData(0, 0, 48, 48).data.some((value, index) => index % 4 === 3 && value > 0)) {
+              window.mascotBlinks.push({ to: value, parked: body.dataset.parked })
+            }
+          })
+        },
+      })
+    })
+    await blinkPage.goto(base, { waitUntil: 'networkidle' })
+    await blinkPage.locator('[role="status"]').waitFor({ state: 'detached', timeout: 10000 })
+    await blinkPage.waitForTimeout(600)
+    for (const step of [100, -100]) {
+      for (let i = 0; i < 70; i++) { await blinkPage.mouse.wheel(0, step); await blinkPage.waitForTimeout(50) }
+    }
+    await blinkPage.waitForTimeout(800)
+    const { resizes, blinks } = await blinkPage.evaluate(() => ({ resizes: window.mascotResizes, blinks: window.mascotBlinks }))
+    assert(resizes > 10, `Mascot never resized (${resizes}); the blink check saw nothing`)
+    assert.deepEqual(blinks, [], 'Mascot canvas painted blank after a resize')
+    console.log(`Mascot resized ${resizes} times without a blank frame: PASS`)
+    await blinkContext.close()
+  }
 
   const context = await browser.newContext({ viewport: { width: 1440, height: 900 } })
   const page = await context.newPage()

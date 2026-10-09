@@ -1,8 +1,16 @@
-import { Link } from 'react-router'
+import type { MouseEvent, ReactNode } from 'react'
+import { Link, useLocation } from 'react-router'
 import { Facebook, MessageCircle, Send, Twitter, Youtube } from 'lucide-react'
 import LogoMark from '../components/LogoMark'
 import { Reveal, RevealGroup } from '../components/Reveal'
 import { useAnchorScroll } from '../hooks/useAnchorScroll'
+
+const POLICY_LINKS = [
+  { hash: 'privacy', label: 'Privacy Policy' },
+  { hash: 'terms', label: 'Terms of Service' },
+  { hash: 'cookies', label: 'Cookie Policy' },
+  { hash: 'copyright', label: 'Copyright Policy' },
+]
 
 const SOCIALS = [
   { icon: Twitter, label: 'X (Twitter)', href: 'https://x.com/XteriumWallet' },
@@ -12,8 +20,21 @@ const SOCIALS = [
   { icon: MessageCircle, label: 'Discord', href: 'https://discord.gg/5fXf4fK8' },
 ]
 
+/** A link to a section of the home page: an in-page scroll there, a navigation from any other page. */
+function HomeSection({ hash, onHome, onClick, children }: {
+  hash: string
+  onHome: boolean
+  onClick: (event: MouseEvent<HTMLAnchorElement>) => void
+  children: ReactNode
+}) {
+  const className = 'text-dim transition-colors hover:text-primary'
+  if (onHome) return <a href={`#${hash}`} onClick={onClick} className={className}>{children}</a>
+  return <Link to={{ pathname: '/', hash: `#${hash}` }} className={className}>{children}</Link>
+}
+
 export default function Footer() {
   const onAnchorClick = useAnchorScroll()
+  const onHome = useLocation().pathname === '/'
 
   return (
     <footer className="snap-section relative border-t border-line bg-panel" data-surface="panel">
@@ -32,8 +53,8 @@ export default function Footer() {
           <Reveal variant="sharp" className="md:border-l md:border-line-soft md:pl-8">
             <p className="font-mono2 text-[11px] uppercase tracking-[0.22em] text-dim">Product</p>
             <ul className="mt-4 space-y-2.5 text-sm">
-              <li><a href="#showcase" onClick={onAnchorClick} className="text-dim transition-colors hover:text-primary">The app</a></li>
-              <li><a href="#download" onClick={onAnchorClick} className="text-dim transition-colors hover:text-primary">Download</a></li>
+              <li><HomeSection hash="showcase" onHome={onHome} onClick={onAnchorClick}>The app</HomeSection></li>
+              <li><HomeSection hash="download" onHome={onHome} onClick={onAnchorClick}>Download</HomeSection></li>
             </ul>
           </Reveal>
 
@@ -60,11 +81,6 @@ export default function Footer() {
                   Chrome Web Store
                 </a>
               </li>
-              <li>
-                <Link to="/privacy-policy" className="text-dim transition-colors hover:text-primary">
-                  Privacy Policy
-                </Link>
-              </li>
             </ul>
           </Reveal>
 
@@ -86,10 +102,27 @@ export default function Footer() {
           </Reveal>
         </RevealGroup>
 
-        <div className="mt-12 flex flex-col gap-2 border-t border-line-soft pt-6 font-mono2 text-[11px] uppercase tracking-[0.16em] text-dim md:flex-row md:items-center md:justify-between">
-          <p>© {new Date().getFullYear()} RAKSON OPC · All rights reserved</p>
-          <p className="hidden text-faint lg:block">build 2.0.4 · main · sha dfc93e1</p>
-          <p>Xterium Wallet — built for the <span className="text-primary">Xode</span> ecosystem</p>
+        {/* one line on wide screens: the copyright left, the policies right. Narrower,
+            the policies come first and the copyright sits under them */}
+        <div className="mt-12 flex flex-col gap-5 border-t border-line-soft pt-6 lg:flex-row lg:items-baseline lg:justify-between">
+          <p className="order-2 font-mono2 text-[11px] uppercase tracking-[0.16em] text-dim lg:order-1">
+            © {new Date().getFullYear()} Xode Network. All rights reserved.{' '}
+            <a href="https://xode.net" target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-primary">
+              xode.net
+            </a>
+          </p>
+          {/* every policy lives on one page; each link lands on its section */}
+          <nav aria-label="Legal" className="order-1 lg:order-2">
+            <ul className="flex flex-wrap gap-x-6 gap-y-2 text-[13px]">
+              {POLICY_LINKS.map((policy) => (
+                <li key={policy.hash}>
+                  <Link to={{ pathname: '/policy', hash: `#${policy.hash}` }} className="text-dim transition-colors hover:text-primary">
+                    {policy.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </nav>
         </div>
       </div>
     </footer>

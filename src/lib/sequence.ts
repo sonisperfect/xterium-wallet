@@ -49,10 +49,37 @@ export function stepMidpoint(index: number) {
 export const STATS_STAGE = {
   /** The tilted lock-screen phone lies flat and its ghost outlines converge. */
   untilt: [0.22, 0.66],
+  /** The phone's starting tilt in CSS degrees (rotateX, rotateY, rotate). */
+  tilt: { x: 52, y: -24, z: -16 },
   /** Where each stat card starts rising. */
   cards: [0.5, 0.56, 0.62, 0.68],
   /** How long a card takes to rise. */
   rise: 0.12,
   /** How far into its rise a card starts counting. */
   countAfter: 0.09,
+}
+
+/**
+ * The mascot's route between its docks. At the top of the page it's tucked
+ * away behind the nav's logo; scrolling from there brings it out into the
+ * hero. Then — as progress through each stage — it shrinks onto the top of
+ * the phone as the phone rises, moves over the logo in the app's header as
+ * the first screen wipes in, and lands in the lock screen as the stats stage
+ * pins.
+ */
+export const MASCOT = {
+  /** Scroll (px) past which it comes out of the nav's logo; back above it, it tucks away again. */
+  outAfter: 4,
+  /** Nav logo → its place on the route (seconds). */
+  outDuration: 1.1,
+  /** Back into the nav's logo (seconds). */
+  inDuration: 0.7,
+  /** Hero → the top of the phone, over the hero sequence's progress. */
+  heroToApp: [0.06, 0.24],
+  /** The top of the phone → the app's header logo, around the first screen's wipe (0.37). */
+  topToLogo: [0.34, 0.39],
+  /** The app's header logo → the lock screen, over the stats stage's progress. */
+  appToStats: [0.02, 0.5],
+  /** A turn of the mark each time the app screen changes (seconds). */
+  flipDuration: 0.7,
 }
