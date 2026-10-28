@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router'
 import Home from './pages/Home'
+import HowTo from './pages/HowTo'
 import Policies from './pages/Policies'
 
 const PRIVACY = { pathname: '/policy', hash: '#privacy' }
@@ -36,6 +37,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<Home />} />
       <Route path="/policy" element={<Policies />} />
+      <Route path="/how-to" element={<HowTo />} />
       {/* the old single-policy addresses */}
       <Route path="/privacy" element={<Navigate to={PRIVACY} replace />} />
       <Route path="/privacy-policy" element={<Navigate to={PRIVACY} replace />} />

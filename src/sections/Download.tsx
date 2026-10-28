@@ -16,7 +16,7 @@ const STORES = [
     icon: ChromeWebStoreIcon,
     top: 'Available in the',
     name: 'Chrome Web Store',
-    href: 'https://chromewebstore.google.com/detail/xterium/klfhdmiebenifpdmdmkjicdohjilabdg',
+    href: 'https://chromewebstore.google.com/detail/xterium/bijjcgkeobpgginefkibhflacpekcljh',
   },
   {
     icon: GooglePlayIcon,
