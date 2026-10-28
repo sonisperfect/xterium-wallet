@@ -7,9 +7,11 @@ const out = 'scripts/shots-dev'
 const parts = [
   ['install', 'Install', 'Install the extension'], ['setup', 'Set up', 'Set up your wallet'],
   ['portfolio', 'Portfolio', 'View your portfolio'], ['connect', 'Connect & sign', 'Connect to a dApp and sign'],
-  ['security', 'Security', 'Security tips'],
+  ['accounts', 'Accounts', 'Use multiple accounts'], ['security', 'Security', 'Security tips'],
 ]
-const footerLinks = ['install', 'setup', 'connect', 'security']
+const footerLinks = ['install', 'setup', 'connect', 'accounts', 'security']
+const STEPS = 9
+const SHOTS = 16
 await mkdir(out, { recursive: true })
 const browser = await chromium.launch({ channel: 'msedge', headless: true,
   args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] })
@@ -44,18 +46,18 @@ try {
     assert.equal(await page.title(), 'How to Use Xterium — Xterium Wallet')
     assert.equal(await page.locator('h1').innerText(), 'How to use Xterium')
 
-    // every part on the page, in order, each with a tab to it; all eight steps under them
+    // every part on the page, in order, each with a tab to it; all the steps under them
     assert.deepEqual(await page.locator('.policy-section h2').allInnerTexts(), parts.map(([, , title]) => title))
     assert.deepEqual(await page.locator('.policy-tabs a').evaluateAll((links) => links.map((a) => [a.getAttribute('href'), a.textContent])),
       parts.map(([id, tab]) => [`#${id}`, tab]))
     assert.equal(await page.locator('.policy-tabs a[aria-current]').getAttribute('href'), '#install')
     assert.deepEqual(await page.locator('.howto-step').evaluateAll((steps) => steps.map((s) => s.id)),
-      Array.from({ length: 8 }, (_, i) => `step-${i + 1}`))
+      Array.from({ length: STEPS }, (_, i) => `step-${i + 1}`))
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), `${name}: horizontal overflow`)
     await page.screenshot({ path: `${out}/howto-${name}.png` })
 
-    // all fourteen screenshots load, numbered in order, and fit the column; the walkthrough video is playable
-    assert.equal(await page.locator('.howto-shot').count(), 14)
+    // every screenshot loads, numbered in order, and fits the column; the walkthrough video is playable
+    assert.equal(await page.locator('.howto-shot').count(), SHOTS)
     for (const shot of await page.locator('.howto-shot img').all()) {
       await shot.scrollIntoViewIfNeeded()
       await shot.evaluate((img) => img.decode())

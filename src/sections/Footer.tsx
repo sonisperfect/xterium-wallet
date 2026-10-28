@@ -16,6 +16,7 @@ const HOW_TO_LINKS = [
   { hash: 'install', label: 'Install the extension' },
   { hash: 'setup', label: 'Set up your wallet' },
   { hash: 'connect', label: 'Connect to a dApp' },
+  { hash: 'accounts', label: 'Use multiple accounts' },
   { hash: 'security', label: 'Security tips' },
 ]
 
