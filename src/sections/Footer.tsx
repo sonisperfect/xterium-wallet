@@ -12,6 +12,13 @@ const POLICY_LINKS = [
   { hash: 'copyright', label: 'Copyright Policy' },
 ]
 
+const HOW_TO_LINKS = [
+  { hash: 'install', label: 'Install the extension' },
+  { hash: 'setup', label: 'Set up your wallet' },
+  { hash: 'connect', label: 'Connect to a dApp' },
+  { hash: 'security', label: 'Security tips' },
+]
+
 const SOCIALS = [
   { icon: Twitter, label: 'X (Twitter)', href: 'https://x.com/XteriumWallet' },
   { icon: Youtube, label: 'YouTube', href: 'https://www.youtube.com/@XteriumWallet' },
@@ -39,7 +46,7 @@ export default function Footer() {
   return (
     <footer className="snap-section relative border-t border-line bg-panel" data-surface="panel">
       <div className="relative mx-auto max-w-7xl px-5 py-20 sm:px-8">
-        <RevealGroup stagger={0.06} className="grid gap-10 md:grid-cols-[1.2fr_1fr_1fr_auto]">
+        <RevealGroup stagger={0.06} className="grid gap-10 sm:grid-cols-2 lg:grid-cols-[1.2fr_1fr_1fr_1fr_auto]">
           <Reveal variant="sharp">
             <div className="flex items-center gap-2.5">
               <LogoMark size={30} />
@@ -50,7 +57,7 @@ export default function Footer() {
             </p>
           </Reveal>
 
-          <Reveal variant="sharp" className="md:border-l md:border-line-soft md:pl-8">
+          <Reveal variant="sharp" className="lg:border-l lg:border-line-soft lg:pl-8">
             <p className="font-mono2 text-[11px] uppercase tracking-[0.22em] text-dim">Product</p>
             <ul className="mt-4 space-y-2.5 text-sm">
               <li><HomeSection hash="showcase" onHome={onHome} onClick={onAnchorClick}>The app</HomeSection></li>
@@ -58,7 +65,23 @@ export default function Footer() {
             </ul>
           </Reveal>
 
-          <Reveal variant="sharp" className="md:border-l md:border-line-soft md:pl-8">
+          {/* the guide's parts, each link landing on its section of /how-to */}
+          <Reveal variant="sharp" className="lg:border-l lg:border-line-soft lg:pl-8">
+            <p className="font-mono2 text-[11px] uppercase tracking-[0.22em] text-dim">How to</p>
+            <nav aria-label="How to">
+              <ul className="mt-4 space-y-2.5 text-sm">
+                {HOW_TO_LINKS.map((link) => (
+                  <li key={link.hash}>
+                    <Link to={{ pathname: '/how-to', hash: `#${link.hash}` }} className="text-dim transition-colors hover:text-primary">
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+          </Reveal>
+
+          <Reveal variant="sharp" className="lg:border-l lg:border-line-soft lg:pl-8">
             <p className="font-mono2 text-[11px] uppercase tracking-[0.22em] text-dim">Ecosystem</p>
             <ul className="mt-4 space-y-2.5 text-sm">
               <li>
@@ -73,7 +96,7 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href="https://chromewebstore.google.com/detail/xterium/klfhdmiebenifpdmdmkjicdohjilabdg"
+                  href="https://chromewebstore.google.com/detail/xterium/bijjcgkeobpgginefkibhflacpekcljh"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-dim transition-colors hover:text-primary"
@@ -84,7 +107,7 @@ export default function Footer() {
             </ul>
           </Reveal>
 
-          <Reveal variant="sharp" className="flex flex-col items-start gap-4 md:items-end md:border-l md:border-line-soft md:pl-8">
+          <Reveal variant="sharp" className="flex flex-col items-start gap-4 lg:items-end lg:border-l lg:border-line-soft lg:pl-8">
             <div className="flex flex-wrap gap-2.5">
               {SOCIALS.map((s) => (
                 <a
