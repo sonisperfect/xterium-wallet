@@ -2,7 +2,7 @@ import { useEffect } from 'react'
 import { Link } from 'react-router'
 import SectionTabs from '../components/SectionTabs'
 import Footer from '../sections/Footer'
-import { ConnectAndSign, Install, Portfolio, SecurityTips, SetUp } from '../sections/HowToContent'
+import { ConnectAndSign, Install, MultipleAccounts, Portfolio, SecurityTips, SetUp } from '../sections/HowToContent'
 
 // The guide's parts, each reachable at /how-to#<id>; `tab` is its short name in the tab row.
 const PARTS = [
@@ -10,6 +10,7 @@ const PARTS = [
   { id: 'setup', tab: 'Set up', title: 'Set up your wallet', Body: SetUp },
   { id: 'portfolio', tab: 'Portfolio', title: 'View your portfolio', Body: Portfolio },
   { id: 'connect', tab: 'Connect & sign', title: 'Connect to a dApp and sign', Body: ConnectAndSign },
+  { id: 'accounts', tab: 'Accounts', title: 'Use multiple accounts', Body: MultipleAccounts },
   { id: 'security', tab: 'Security', title: 'Security tips', Body: SecurityTips },
 ]
 

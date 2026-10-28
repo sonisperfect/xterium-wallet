@@ -7,20 +7,22 @@ const STORE = 'https://chromewebstore.google.com/detail/xterium/bijjcgkeobpggine
 
 // The screenshots in public/assets/how-to/, in the order the guide numbers them.
 const SHOTS = [
-  { file: '01-welcome', width: 509, height: 643, caption: 'Welcome screen, terms not yet accepted' },
-  { file: '02-terms-accepted', width: 452, height: 602, caption: 'Terms accepted, Get Started enabled' },
-  { file: '03-setup-wallet', width: 506, height: 635, caption: 'Setup your wallet' },
-  { file: '04-import-options', width: 490, height: 665, caption: 'Import Options' },
-  { file: '05-import-seed', width: 465, height: 644, caption: 'Import Seed Phrase screen' },
-  { file: '06-word-boxes', width: 453, height: 586, caption: 'Empty word boxes with Paste from Clipboard and Import Wallet' },
-  { file: '07-seed-filled', width: 440, height: 585, caption: 'Seed phrase filled in' },
-  { file: '08-set-password', width: 454, height: 588, caption: 'Confirm Save, set a password' },
-  { file: '09-portfolio', width: 519, height: 624, caption: 'Portfolio dashboard' },
-  { file: '10-connect', width: 469, height: 616, caption: 'Connect Accounts, no account selected' },
-  { file: '11-account-selected', width: 455, height: 613, caption: 'Account selected' },
-  { file: '12-sign-request', width: 462, height: 616, caption: 'Sign request' },
-  { file: '13-transaction-details', width: 476, height: 633, caption: 'Transaction details' },
-  { file: '14-confirm-password', width: 468, height: 627, caption: 'Confirm Transaction with password' },
+  { file: '01-welcome.png', width: 509, height: 643, caption: 'Welcome screen, terms not yet accepted' },
+  { file: '02-terms-accepted.png', width: 452, height: 602, caption: 'Terms accepted, Get Started enabled' },
+  { file: '03-setup-wallet.png', width: 506, height: 635, caption: 'Setup your wallet' },
+  { file: '04-import-options.png', width: 490, height: 665, caption: 'Import Options' },
+  { file: '05-import-seed.png', width: 465, height: 644, caption: 'Import Seed Phrase screen' },
+  { file: '06-word-boxes.png', width: 453, height: 586, caption: 'Empty word boxes with Paste from Clipboard and Import Wallet' },
+  { file: '07-seed-filled.png', width: 440, height: 585, caption: 'Seed phrase filled in' },
+  { file: '08-set-password.png', width: 454, height: 588, caption: 'Confirm Save, set a password' },
+  { file: '09-portfolio.png', width: 519, height: 624, caption: 'Portfolio dashboard' },
+  { file: '10-connect.png', width: 469, height: 616, caption: 'Connect Accounts, no account selected' },
+  { file: '11-account-selected.png', width: 455, height: 613, caption: 'Account selected' },
+  { file: '12-sign-request.png', width: 462, height: 616, caption: 'Sign request' },
+  { file: '13-transaction-details.png', width: 476, height: 633, caption: 'Transaction details' },
+  { file: '14-confirm-password.png', width: 468, height: 627, caption: 'Confirm Transaction with password' },
+  { file: '15-settings-accounts.jpg', width: 487, height: 645, caption: 'Settings, Accounts and Security' },
+  { file: '16-connect-multiple.jpg', width: 456, height: 596, caption: 'Connect Accounts with two accounts, one selected' },
 ]
 
 /** Screenshot `n` of the guide, with its numbered caption. */
@@ -28,7 +30,7 @@ function Shot({ n }: { n: number }) {
   const { file, width, height, caption } = SHOTS[n - 1]
   return (
     <figure className="howto-shot">
-      <img src={`/assets/how-to/${file}.png`} width={width} height={height} alt={caption} loading="lazy" decoding="async" />
+      <img src={`/assets/how-to/${file}`} width={width} height={height} alt={caption} loading="lazy" decoding="async" />
       <figcaption>Image {n} · {caption}</figcaption>
     </figure>
   )
@@ -230,6 +232,36 @@ export function ConnectAndSign() {
         </ol>
       </Step>
     </>
+  )
+}
+
+export function MultipleAccounts() {
+  return (
+    <Step n={9} title="Connect more than one account">
+      <p>
+        If you have more than one wallet or account in Xterium, you can choose which ones a site can see. You can
+        share one account or several at once.
+      </p>
+      <ol>
+        <li>Click the gear icon on the Portfolio screen to open <strong>Settings</strong>.</li>
+        <li>Under <strong>Accounts and Security</strong>, click <strong>Connect Accounts</strong>.</li>
+      </ol>
+      <Shot n={15} />
+      <ol start={3}>
+        <li>
+          The Connect Accounts window shows the site you’re connecting to (here, http://localhost:4200) and every
+          account in your wallet, each with its short address and name.
+        </li>
+        <li>
+          Tick each account you want to share (here, Alice is ticked and Collator3 is not). The counter shows how
+          many are selected.
+        </li>
+      </ol>
+      <Shot n={16} />
+      <ol start={5}>
+        <li>Click <strong>Connect</strong>. Click <strong>Close</strong> instead to leave without connecting.</li>
+      </ol>
+    </Step>
   )
 }
 
